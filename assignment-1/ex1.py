@@ -44,12 +44,12 @@ class ConditionalGaussian:
         self.f = f
 
     
-    def get_conditioanl_mean(self):
+    def get_conditional_mean(self):
         return np.dot(self.means, self.probabilities)
     
     def get_conditional_variance(self):
         expected_variance = np.dot(self.variances, self.probabilities)
-        computed_mean = self.get_conditioanl_mean()
+        computed_mean = self.get_conditional_mean()
         variance_of_expectation = np.dot(list(map(lambda x: (x-computed_mean)**2, self.means)), self.probabilities)
         return expected_variance + variance_of_expectation
     
@@ -80,7 +80,7 @@ class ConditionalGaussian:
 
 
 myvar = ConditionalGaussian([-2, 4, 10, 15], [2, 1, 3, 2], [0.15, 0.25, 0.35, 0.25])
-print("Theoretical mean: " + str(myvar.get_conditioanl_mean()))
+print("Theoretical mean: " + str(myvar.get_conditional_mean()))
 print("Theoretical variance: " + str(myvar.get_conditional_variance()))
 
 N = 1_000_000
@@ -106,8 +106,8 @@ yticks2 = 1
 
 plt.title('Means against number of examples')
 plt.xlim(0, offset)
-plt.ylim(0, myvar.get_conditioanl_mean()*2)
-#plt.yticks(np.arange(0, myvar.get_conditioanl_mean()*2, yticks1))
+plt.ylim(0, myvar.get_conditional_mean()*2)
+#plt.yticks(np.arange(0, myvar.get_conditional_mean()*2, yticks1))
 plt.plot(examples, means)
 plt.savefig('./assignment-1/mean.png')
 
@@ -125,6 +125,10 @@ empirical_mean_dataset, empirical_var_dataset = np.mean(samples), np.var(samples
 print("Dataset mean: " + str(empirical_mean_dataset), "\nDataset variance: " + str(empirical_var_dataset))
 
 #Conclusions: both mean and variances computed on the dataset of the samples meet with theoretical evidences
+print(f"Absolute error in mean {abs(empirical_mean_dataset-myvar.get_conditional_mean())}")
+print(f"Absolute error in variance {abs(empirical_var_dataset-myvar.get_conditional_variance())}")
+print(f"Relative error in mean {abs(empirical_mean_dataset-myvar.get_conditional_mean()) / abs(myvar.get_conditional_mean())}")
+print(f"Relative error in variance {abs(empirical_var_dataset-myvar.get_conditional_variance()) / abs(myvar.get_conditional_variance())}")
 
 #Theoretical notes and considerations
 #Var(X) = E[Var(X|Y)] + Var(E[X|Y])
