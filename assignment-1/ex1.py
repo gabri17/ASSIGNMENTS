@@ -124,6 +124,7 @@ plt.savefig('./assignment-1/variance.png')
 empirical_mean_dataset, empirical_var_dataset = np.mean(samples), np.var(samples)
 print("Dataset mean: " + str(empirical_mean_dataset), "\nDataset variance: " + str(empirical_var_dataset))
 
+#Conclusions: both mean and variances computed on the dataset of the samples meet with theoretical evidences
 
 #Var(X) = E[Var(X|Y)] + Var(E[X|Y])
 #X is my conditional distribution
