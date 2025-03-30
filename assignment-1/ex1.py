@@ -4,6 +4,8 @@ import random
 import matplotlib.pyplot as plt
 
 """
+Problems data
+
 mean_1, var_1 = -2, 2
 mean_2, var_2 = 4, 1
 mean_3, var_3 = 10, 3
@@ -19,14 +21,15 @@ p_4 = 0.25
 f_4 = 1
 """
 
+#Class to model the conditional Gaussian in our example
 class ConditionalGaussian:
 
     def __init__(self, means, variances, probabilities):
         if(sum(probabilities) != 1):
-            print("Probabilities do not respect probabilities axioms")
+            raise ValueError("Probabilities do not respect probabilities axioms")
 
         if(len(probabilities) != len(means) & len(means) != len(variances)):
-            print("Not ok data")
+            raise ValueError("Not ok data")
         
         self.means = means
         self.variances = variances
@@ -62,6 +65,19 @@ class ConditionalGaussian:
                     return float(np.random.normal(self.means[i], np.sqrt(self.variances[i]), 1)[0])
                 else:
                     continue
+    
+    def better_sample(self):
+        """
+        We use random.choices to choose from which Gaussian to sample
+        """
+
+        index = random.choices(range(len(self.probabilities)), weights=self.probabilities)[0]
+
+        mean = self.means[index]
+        variance = self.variances[index]
+        return random.gauss(mean, np.sqrt(variance))
+
+
 
 myvar = ConditionalGaussian([-2, 4, 10, 15], [2, 1, 3, 2], [0.15, 0.25, 0.35, 0.25])
 print("Theoretical mean: " + str(myvar.get_conditioanl_mean()))
@@ -77,19 +93,21 @@ offset = 10_000
 
 for i in range(N):
     samples.append(myvar.sample())
-    
+    #samples.append(myvar.better_sample())
+
     if(i < offset):
         examples.append(i)
         means.append(float(np.mean(samples)))
         variances.append(np.var(samples))
 
+#Playing with the plots
 yticks1 = 1
 yticks2 = 1
 
 plt.title('Means against number of examples')
 plt.xlim(0, offset)
 plt.ylim(0, myvar.get_conditioanl_mean()*2)
-plt.yticks(np.arange(0, myvar.get_conditioanl_mean()*2, yticks1))
+#plt.yticks(np.arange(0, myvar.get_conditioanl_mean()*2, yticks1))
 plt.plot(examples, means)
 plt.savefig('./assignment-1/mean.png')
 
@@ -106,14 +124,6 @@ plt.savefig('./assignment-1/variance.png')
 empirical_mean_dataset, empirical_var_dataset = np.mean(samples), np.var(samples)
 print("Dataset mean: " + str(empirical_mean_dataset), "\nDataset variance: " + str(empirical_var_dataset))
 
-"""
-computed_mean = mean_1 * p_1 + mean_2 * p_2 + mean_3 * p_3 + mean_4 * p_4
-print("Computed mean: " + str(computed_mean))
-
-computed_variance = (p_1*var_1 + p_2*var_2 + p_3*var_3 + p_4*var_4) + (p_1*((mean_1-computed_mean)**2) + p_2*((mean_2-computed_mean)**2) + p_3*((mean_3-computed_mean)**2) + p_4*((mean_4-computed_mean)**2))
-print("Computed variance: " + str(computed_variance))
-"""
-
 
 #Var(X) = E[Var(X|Y)] + Var(E[X|Y])
 #X is my conditional distribution
@@ -121,6 +131,6 @@ print("Computed variance: " + str(computed_variance))
 #X | Y is one of the gaussians
 
 #E[X] = E[X|Y1]P(Y1) + E[X|Y2]P(Y2) + E[X|Y3]P(Y3) + E[X|Y4]P(Y4)
-#E[X|Y] is given
+#E[X|Y1] is given, then E[X|Y] = E[X]
 #E[Var(X|Y)] = p_1*var_1 + p_2*var_2 + p_3*var_3 + p_4*var_4
 #Var(E[X|Y]) = p_1*((mean_1-computed_mean)**2) + p_2*((mean_2-computed_mean)**2) + p_3*((mean_3-computed_mean)**2) + p_4*((mean_4-computed_mean)**4)
