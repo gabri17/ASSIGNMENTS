@@ -126,6 +126,7 @@ print("Dataset mean: " + str(empirical_mean_dataset), "\nDataset variance: " + s
 
 #Conclusions: both mean and variances computed on the dataset of the samples meet with theoretical evidences
 
+#Theoretical notes and considerations
 #Var(X) = E[Var(X|Y)] + Var(E[X|Y])
 #X is my conditional distribution
 #Y is the probability of each gaussian
