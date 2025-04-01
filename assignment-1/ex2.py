@@ -42,13 +42,28 @@ for i in range(N):
     samples_exp.append(myexp.sample())
     samples_uni.append(myuni.sample())
 
-#Playing with the plots
-plt.title('Distribution of the samples of the exponential')
-plt.hist(samples_exp, bins=150, density=False, alpha=0.6, color='blue') #bins to group data, alpha for aesthetic, density = True for normalization and does not show actual values
-plt.show()
-#plt.savefig('./assignment-1/samples-exp.png')
+empirical_probability = sum(1 for x, y in zip(samples_exp, samples_uni) if x > y) / N
 
-plt.title('Distribution of the samples of the uniform')
-plt.hist(samples_uni, bins=150, density=False, alpha=0.6, color='red')
+theoretical_probability = (1 / (HIGH - LOW)) * (1 - np.exp(-HIGH))
+
+print(f"Empirical probability P(X > Y): {empirical_probability:.6f}")
+print(f"Theoretical probability P(X > Y): {theoretical_probability:.6f}")
+
+
+# Exponential Distribution
+plt.figure(figsize=(10, 4))
+plt.title('Distribution of the Exponential Samples (mean=1)')
+plt.hist(samples_exp, bins=150, density=False, alpha=0.6, color='blue')
+plt.xlabel('Value')
+plt.ylabel('Frequency')
 plt.show()
-#plt.savefig('./assignment-1/samples-uniform.png')
+# plt.savefig('./assignment-1/samples-exp.png')
+
+# Uniform Distribution
+plt.figure(figsize=(10, 4))
+plt.title('Distribution of the Uniform Samples [0, 5]')
+plt.hist(samples_uni, bins=150, density=False, alpha=0.6, color='red')
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.show()
+# plt.savefig('./assignment-1/samples-uniform.png')
