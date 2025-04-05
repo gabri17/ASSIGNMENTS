@@ -12,7 +12,7 @@ class ExponentialRv:
         self.param = param
 
     def sample(self):
-        return np.random.exponential(1 / self.param)
+        return np.random.exponential(self.param)
 
 class UniformRv:
 
@@ -29,12 +29,12 @@ class UniformRv:
 
 
 MEAN = 1
-myexp = ExponentialRv(MEAN)
+myexp = ExponentialRv(1 / MEAN)
 
 LOW, HIGH = 0, 5
 myuni = UniformRv(LOW, HIGH)
 
-N = 300_000
+N = 5_000_000
 samples_exp = []
 samples_uni = []
 
@@ -44,7 +44,7 @@ for i in range(N):
 
 empirical_probability = sum(1 for x, y in zip(samples_exp, samples_uni) if x > y) / N
 
-theoretical_probability = (1 / (HIGH - LOW)) * (1 - np.exp(-HIGH))
+theoretical_probability = (1 / (HIGH - LOW)) * (np.exp(LOW) - np.exp(-HIGH))
 
 print(f"Empirical probability P(X > Y): {empirical_probability:.6f}")
 print(f"Theoretical probability P(X > Y): {theoretical_probability:.6f}")
@@ -56,7 +56,7 @@ plt.title('Distribution of the Exponential Samples (mean=1)')
 plt.hist(samples_exp, bins=150, density=False, alpha=0.6, color='blue')
 plt.xlabel('Value')
 plt.ylabel('Frequency')
-plt.show()
+# plt.show()
 # plt.savefig('./assignment-1/samples-exp.png')
 
 # Uniform Distribution
@@ -65,5 +65,5 @@ plt.title('Distribution of the Uniform Samples [0, 5]')
 plt.hist(samples_uni, bins=150, density=False, alpha=0.6, color='red')
 plt.xlabel('Value')
 plt.ylabel('Frequency')
-plt.show()
+# plt.show()
 # plt.savefig('./assignment-1/samples-uniform.png')
