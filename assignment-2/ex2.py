@@ -7,29 +7,42 @@ A = 8.8480182
 def f(x):
     return (1/A) * (x**2) * (np.sin(np.pi*x)**2)
 
-max_point = 0.013
+max_point = 0.8
 
 samples = []
-N = 100_000
+N = 400_000
+fails = 0
 
 for i in range(N):
     U1 = random.uniform(-3, 3)
     U2 = random.uniform(0, max_point)
+    
     while U2 >= f(U1):
+        fails+=1
         U1 = random.uniform(-3, 3)
+        U2 = random.uniform(0, max_point)
+    
     samples.append(U1)
+    #print(i, fails)
 
 x_points = np.arange(-3, 3, 0.01)
 y_points = list(map(f, x_points))
 
+#fig, ax = plt.subplots()
+#ax.set_title('Empirical PDF vs Theoretical PDF')
+#ax.set_xlim([-3, 3])
+#ax.hist(samples, bins=1500, density=True, alpha=0.6, color='blue')
+#ax.plot(x_points, y_points, color='green')
 
 plt.figure(figsize=(10, 4))
 plt.title('Empirical PDF')
-plt.hist(samples, bins=1500, density=True, alpha=0.6, color='blue')
-plt.xlabel('Value')
-plt.ylabel('Frequency')
+plt.hist(samples, bins=1500, density=True, alpha=0.6, color='yellow')
+plt.scatter(samples,  list(map(f, samples)))
+plt.plot(x_points, y_points, color='green')
+plt.xlabel('X')
+plt.ylabel('Y')
 plt.show()
 
-plt.title('PDF')
-plt.plot(x_points, y_points, color='green')
-plt.show()
+#plt.title('PDF')
+#plt.plot(x_points, y_points, color='green')
+#plt.show()
