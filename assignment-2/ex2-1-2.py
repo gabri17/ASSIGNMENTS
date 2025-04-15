@@ -10,7 +10,7 @@ def f(x):
 max_point = 0.8
 
 samples = []
-N = 400_000
+N = 50_000 #play with it
 fails = 0
 
 for i in range(N):
@@ -36,8 +36,7 @@ y_points = list(map(f, x_points))
 
 plt.figure(figsize=(10, 4))
 plt.title('Empirical PDF')
-plt.hist(samples, bins=1500, density=True, alpha=0.6, color='yellow')
-plt.scatter(samples,  list(map(f, samples)))
+plt.hist(samples, bins=150, density=True, alpha=0.6, color='red') #play with bins
 plt.plot(x_points, y_points, color='green')
 plt.xlabel('X')
 plt.ylabel('Y')
