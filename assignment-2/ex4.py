@@ -43,11 +43,14 @@ for i in range(sets):
 
     conf_inters.append((empirical_mean - delta, empirical_mean + delta))
 
-#nice way to plot them?
+#nicer way to plot them?
+colors = ['#e63946', '#457b9d', '#1d3557']
 plt.figure(figsize=(10, 4))
 plt.title('Confidence intervals')
 for i in range(sets):
-    plt.vlines(i, conf_inters[i][0], conf_inters[i][1])
+    plt.vlines(i, conf_inters[i][0], conf_inters[i][1], color=colors[random.randint(0, 2)])
 plt.xlabel('X')
 plt.ylabel('Y')
 plt.show()
+
+#answer: 5% so 5 CI will be wrong (since we have designed our experiment to be in a way that my CI will contain the mean 95% of the time)
