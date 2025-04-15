@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 A = 8.8480182
 def f(x):
@@ -29,4 +30,24 @@ for j in range(sets):
     partition.append(random.sample(samples, n))
     samples = samples[0:len(samples)-n]
 
+#CI for mean - using asymptotic case: we have no heavy tail (?)
 confidence = 0.95
+etha = 1.96
+
+conf_inters = []
+
+for i in range(sets):
+    empirical_mean = sum(partition[i]) / n
+    empirical_std_dev = sum([(x - empirical_mean)**2 for x in partition[i]]) / n
+    delta = etha * (np.sqrt(empirical_std_dev / n))
+
+    conf_inters.append((empirical_mean - delta, empirical_mean + delta))
+
+#nice way to plot them?
+plt.figure(figsize=(10, 4))
+plt.title('Confidence intervals')
+for i in range(sets):
+    plt.vlines(i, conf_inters[i][0], conf_inters[i][1])
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.show()
