@@ -3,7 +3,7 @@ import random
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-A = 8.8480182
+A = 8.8480182 #se cambia??? piu alto = decade piu velocemente???
 def f(x):
     return (1/A) * (x**2) * (np.sin(np.pi*x)**2)
 
