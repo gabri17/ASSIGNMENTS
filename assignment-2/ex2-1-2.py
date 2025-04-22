@@ -5,6 +5,8 @@ import seaborn as sns
 
 A = 8.8480182 #se cambia??? piu alto = decade piu velocemente???
 def f(x):
+    if x < -3 or x > 3:
+        return 0
     return (1/A) * (x**2) * (np.sin(np.pi*x)**2)
 
 max_point = 0.8

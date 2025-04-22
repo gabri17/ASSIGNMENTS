@@ -100,3 +100,42 @@ plt.figure()
 #plt.boxplot(samples[0:n])
 plt.violinplot(samples[0:n], showmeans=True, showmedians=True)
 plt.show()
+
+print("\n\t\tBootstrap procedure\n")
+
+R, j, k = 999, 25, 975 #standard for confidence = 0.95
+
+first_n = samples[0:n] 
+bootstrap_sample = []
+medians = []
+means = []
+percentiles_90 = []
+
+for i in range(R):
+
+    bootstrap_sample = []
+    
+    for j in range(n):
+        bootstrap_sample.append(random.choice(first_n)) #implements sampling with replacement
+    
+    bootstrap_sample.sort()
+    medians.append(0.5*(bootstrap_sample[int(np.floor(n/2))]+bootstrap_sample[int(np.floor(n/2))+1]))
+    k1 = np.floor(n*0.9+0.1)
+    k2 = np.ceil(n*0.95+0.1)
+    percentiles_90.append(0.5*(bootstrap_sample[int(k1)]+bootstrap_sample[int(k2)]))
+    means.append(sum(bootstrap_sample) / n)
+
+medians.sort()
+means.sort()
+percentiles_90.sort()
+print("Median: ")
+print("\t", medians[j], medians[k])
+print("0.9 quantile: ")
+print("\t", percentiles_90[j], percentiles_90[k])
+print("Mean: ")
+print("\t", means[j], means[k])
+
+plt.figure()
+#plt.boxplot(samples[0:n])
+plt.violinplot(samples[0:n], showmeans=True, showmedians=True)
+plt.show()
