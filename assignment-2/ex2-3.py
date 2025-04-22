@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 A = 8.8480182
 def f(x):
@@ -81,7 +82,7 @@ for i in range(R):
     bootstrap_sample.sort()
     medians.append(0.5*(bootstrap_sample[int(np.floor(n/2))]+bootstrap_sample[int(np.floor(n/2))+1]))
     k1 = np.floor(n*0.9+0.1)
-    k2 = np.ceil(n*0.9+0.1)
+    k2 = np.ceil(n*0.95+0.1)
     percentiles_90.append(0.5*(bootstrap_sample[int(k1)]+bootstrap_sample[int(k2)]))
     means.append(sum(bootstrap_sample) / n)
 
@@ -94,3 +95,8 @@ print("0.9 quantile: ")
 print("\t", percentiles_90[25], percentiles_90[975])
 print("Mean: ")
 print("\t", means[25], means[975])
+
+plt.figure()
+#plt.boxplot(samples[0:n])
+plt.violinplot(samples[0:n], showmeans=True, showmedians=True)
+plt.show()
