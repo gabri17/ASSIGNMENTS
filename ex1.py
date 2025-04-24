@@ -83,15 +83,17 @@ for _ in range(repetitions):
     
     # Method 2: 
     exponentials = np.random.exponential(1/arrival_rate, N)
-    """while sum(exponential_arrival_time) > T:
-        exponentials = np.random.exponential(1/arrival_rate, N)"""
-    S = np.sum(exponentials)
-    scaled_times = exponentials * (T / S) 
-    events_exp = np.cumsum(scaled_times)
-    #events_exp = np.cumsum(exponentials)
+    while sum(exponential_arrival_time) > T:
+        exponentials = np.random.exponential(1/arrival_rate, N)
+    #S = np.sum(exponentials)
+    #scaled_times = exponentials * (T / S) 
+    #events_exp = np.cumsum(scaled_times)
+    events_exp = np.cumsum(exponentials)
     
     ax1.hist(inter_arrival_times, bins=BINS, density=True, alpha=0.2, color='blue', histtype='stepfilled')
-    ax2.hist(events_exp, bins=BINS, density=True, alpha=0.2, color='red', histtype='stepfilled')
+    ax2.hist(events_exp, bins=BINS//2, density=True, alpha=0.2, color='red', histtype='stepfilled')
+    #ax1.hist(exponentials, bins=BINS, density=True, alpha=0.2, color='red', histtype='stepfilled')
+    #ax2.hist(events_uniform, bins=BINS, density=True, alpha=0.2, color='blue', histtype='stepfilled')
 
 # Plot uniform PDF for reference
 ax2.axhline(1/T, color='black', linestyle='--', label='Uniform PDF')
