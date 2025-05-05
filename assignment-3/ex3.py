@@ -46,13 +46,13 @@ ax_new4.hist(residuals, bins=BINS, color='red', alpha=0.7, density=True)
 
 
 def f(x, mu, sigma):
-    return 1/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
+    return (1/(sigma * np.sqrt(2 * np.pi))) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
 
 
 points = np.linspace(-11, 11, 1000)
-mu1, sigma1 = -5, 3
-mu2, sigma2 = 0, 6
-mu3, sigma3 = 4, 1
+mu1, sigma1 = -5, np.sqrt(3)
+mu2, sigma2 = 0, np.sqrt(6)
+mu3, sigma3 = 4, np.sqrt(1)
 
 ax_new4.plot(points, list(map(lambda x: f(x, mu1, sigma1), points)), color='green')
 ax_new4.plot(points, list(map(lambda x: f(x, mu2, sigma2), points)), color='orange')
