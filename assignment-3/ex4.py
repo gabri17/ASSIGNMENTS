@@ -8,7 +8,7 @@ df = pd.read_csv(data_file, header=None, names=['time', 'metric'])
 x = df['time'].values
 y = df['metric'].values
 
-m = 5 #best degree
+m = 5 #best degree 
 
 p = np.polyfit(x, y, m)
 yy = np.zeros(len(x))
