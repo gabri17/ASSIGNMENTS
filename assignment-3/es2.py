@@ -11,7 +11,7 @@ y = df['metric'].values
 plt.scatter(x, y, color='gray', s=20, alpha=0.7)
 errors = []
 
-M = 5 #max degree of polynomial
+M = 8 #max degree of polynomial
 for i in range(1, M+1):
     m = np.polyfit(x, y, i)
     print(i, m)
@@ -23,7 +23,7 @@ for i in range(1, M+1):
 
     errors.append(np.mean((y - yy)**2))
 
-    plt.plot(x, yy, label=f'Degree {i}')
+    plt.plot(x, yy, label=f'Degree {i}', linewidth=3)
 
 plt.ylim(min(y)-1, max(y)+1)
 plt.legend()

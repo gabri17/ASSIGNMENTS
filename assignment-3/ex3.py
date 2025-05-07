@@ -38,7 +38,7 @@ ax_old2.hist(y, bins=BINS, color='blue', alpha=0.7, density=True)
 ax_old2.set_title('Histogram of old distribution')
 
 
-ax_new3.scatter(x, residuals, color='black', s=20, alpha=0.7)
+ax_new3.scatter(x, residuals, color='violet', s=20, alpha=0.3)
 ax_new3.set_title('Scatter plot of new distribution')
 ax_new3.set_ylim(min(residuals)-1, max(residuals)+1)
 
