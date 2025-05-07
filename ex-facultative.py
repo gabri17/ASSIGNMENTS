@@ -107,7 +107,7 @@ def em(data, gaussians, num_epochs=90, print_every=15):
         for k in range(gaussians):
             priors[k] = counts[k] / N
     
-    return parameters, assignments
+    return parameters, assignments, priors
 
 
 ################################################
@@ -122,20 +122,29 @@ dataset_likelihood = []
 MINIMUM_GAUSSIANS = 2
 MAXIMUM_GAUSSIANS = 5
 
+def compute_log_likelihood(data, priors, params):
+    N = len(data)
+    k = len(priors)
+    log_likelihood = 0.0
+    for i in range(N):
+        total = 0.0
+        for j in range(k):
+            total += priors[j] * f(data[i], params[j][0], params[j][1])
+        log_likelihood += np.log(total)
+    return log_likelihood
+
+
 for gaussian in range(MINIMUM_GAUSSIANS, MAXIMUM_GAUSSIANS + 1):
-    param, likelihoods = em(residuals, gaussian, num_epochs=90, print_every=0)
+    param, likelihoods, priors = em(residuals, gaussian, num_epochs=90, print_every=0)
     
     #likelihood is p(x|mu,sigma) * p(mu,sigma) = p(mu,sigma|x)
 
-    for k in range(len(likelihoods)):
-        j = np.argmax(likelihoods[k])
-        #likelihoods[k] = np.log(f(residuals[k], param[j][0], param[j][1]))
-        likelihoods[k] = np.log(likelihoods[k][j])
-
-    dataset_likelihood.append(sum(likelihoods))
+    L = compute_log_likelihood(residuals, priors, param)
+    aic = -2 * L + 2 * (gaussian * 2)
+    dataset_likelihood.append(aic)
 
     print("Gaussian: ", gaussian)
-    print("\tDataset Log-Likelihood: ", dataset_likelihood[-1])
+    print("\tDataset AIC: ", dataset_likelihood[-1])
     for k in range(gaussian):
         print(f"\t[{k} Gaussians] ({param[k][0]}, {param[k][1]})")
     
@@ -161,12 +170,13 @@ for gaussian in range(MINIMUM_GAUSSIANS, MAXIMUM_GAUSSIANS + 1):
         plt.tight_layout()
         plt.show()
 
+#top model is the one with the lowest AIC
 fig = plt.figure()
 plt.plot(range(1, len(dataset_likelihood)+1), dataset_likelihood, 'o-', color='red')
-plt.title('Log-Likelihood vs Gaussian')
+plt.title('AIC vs Gaussian')
 plt.xlabel('#Gaussians')
 plt.xticks(range(1, len(dataset_likelihood)+1))
-plt.ylabel('Dataset Log-Likelihood')
+plt.ylabel('Dataset AIC')
 plt.show()
 ################################################
 """
