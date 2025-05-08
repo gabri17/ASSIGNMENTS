@@ -34,44 +34,61 @@ def f(x, mu, sigma):
     return (1/(sigma * np.sqrt(2 * np.pi))) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
 
 def em(data, gaussians, num_epochs=90, print_every=15):
+
+    #Auxiliary functions
+    ###################################
+
+    #random value in an internval [low, high]
+    def get_random(low, high):
+        return np.random.rand() * (high-low) + low
+
+    #pdf of a gaussian
+    def f(x, mu, sigma):
+        return (1/(sigma * np.sqrt(2 * np.pi))) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
+    
+    #internal function to print parameters
+    def print_parameters():
+        for k in range(gaussians):
+            print("\tmu", k, "sigma", k, parameters[k][0], parameters[k][1])
+        print("\tPriors: ", priors)
+        print("\n")
+
+    #internal function to compute the likelihood of datapoint coming from gaussian i
+    def compute_likelihood(mu, sigma, datapoint, i):
+        numerator = f(datapoint, mu, sigma) * priors[i]
+        denominator = 0
+        for k in range(gaussians):
+            denominator += f(datapoint, parameters[k][0], parameters[k][1]) * priors[k]
+        return numerator / denominator
+
+    #internal function to reset the parameters
+    def reset():
+        for k in range(gaussians):
+            parameters[k] = [0, 0]
+
+    ###################################
+
+    #Parameters initialization
     start1 = np.mean(data)
     start2 = np.std(data)
 
     parameters = []
+    priors = []
 
+
+    #initialize the parameters of the gaussians
     for _ in range(gaussians):
         parameters.append([start1 + get_random(), start2])
     
-
-    priors = []
+    #initialize the priors of the gaussians
     for _ in range(gaussians):
         priors.append(1/gaussians)
 
     N = len(data)
 
-    #internal function to print parameters
-    def print_parameters():
-        for k in range(gaussians):
-            print("mu", k, "sigma", k, parameters[k][0], parameters[k][1])
-        print("Priors: ", priors)
-
-    #internal function to compute the likelihood
-    def compute_likelihood(mu, sigma, el, i):
-        numerator = f(el, mu, sigma) * priors[i]
-        denominator = 0
-        for k in range(gaussians):
-            denominator += f(el, parameters[k][0], parameters[k][1]) * priors[k]
-        return numerator / denominator
-
-    def reset():
-        for k in range(gaussians):
-            parameters[k] = [0, 0]
-
-    PRINT_EVERY = print_every
-
     for epoch in range(num_epochs):
 
-        if PRINT_EVERY != 0 and epoch % PRINT_EVERY == 0:
+        if print_every != 0 and epoch % print_every == 0:
             print("Epoch: ", epoch)
             print_parameters()
 
@@ -80,6 +97,7 @@ def em(data, gaussians, num_epochs=90, print_every=15):
         #E-step
         for i in range(N):
             assignments.append([])
+            #for each gaussian, compute the likelihood of the datapoint coming from that gaussian
             for k in range(gaussians):
                 assignments[i].append(compute_likelihood(parameters[k][0], parameters[k][1], data[i], k))
 
@@ -88,6 +106,7 @@ def em(data, gaussians, num_epochs=90, print_every=15):
         reset()
         counts = [0] * gaussians
     
+        #update the parameters of the gaussians with various iterations (to compute sum of the likelihoods, mean and standard deviation)
         for i in range(N):
             for k in range(gaussians):
                 counts[k] += assignments[i][k]
@@ -104,6 +123,7 @@ def em(data, gaussians, num_epochs=90, print_every=15):
             parameters[k][1] /= counts[k]
             parameters[k][1] = np.sqrt(parameters[k][1])
 
+        #update the priors of the gaussians
         for k in range(gaussians):
             priors[k] = counts[k] / N
     

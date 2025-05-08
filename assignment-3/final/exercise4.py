@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import norm
 
 #### DATA PREPARATION
 
@@ -22,102 +23,132 @@ for j in range(len(p)):
 residuals = y - yy
 y = residuals
 
-########################################
-#### IMPLEMENTING EXPECTATION MAXIMIZATION ALGORITHM
-
-#Parameters initialization
-LOW, HIGH = -3, 3
-
-def get_random(low=LOW, high=HIGH):
-    return np.random.rand() * (high-low) + low
-
+# pdf of a gaussian
 def f(x, mu, sigma):
     return (1/(sigma * np.sqrt(2 * np.pi))) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
+#
 
-start1 = np.mean(y)
-start2 = np.std(y)
+########################################
+####### IMPLEMENTING EXPECTATION MAXIMIZATION ALGORITHM
 
-mu1, sigma1 =  start1 + get_random(),  start2
-mu2, sigma2 =  start1 + get_random(),  start2
-mu3, sigma3 =  start1 + get_random(),  start2
+##EM algorithm to fit a mixture of gaussians to the data
+## Parameters:
+# data: the data to fit
+# gaussians: the number of gaussians to fit
+# num_epochs: the number of epochs to run the algorithm
+# print_every: the number of epochs to print the parameters
+# Returns:
+# parameters: the parameters of the gaussians parameters[i] = [mu, sigma]
+# assignments: the assignments of the data points to the gaussians
+# priors: the priors of the gaussians
+def em(data, gaussians, num_epochs=90, print_every=15):
 
-print("Initial mu1, sigma1", mu1, sigma1)
-print("Initial mu2, sigma2", mu2, sigma2)
-print("Initial mu3, sigma3", mu3, sigma3)
+    #Auxiliary functions
+    ###################################
 
+    #random value in an internval [low, high] - we initialize in this way to speed up the convergence
+    def get_random(low=-np.std(data), high=np.std(data)):
+        return np.random.rand() * (high-low) + low
 
-#Hyperparameters intialization
-num_epochs = 120
-PRINT_EVERY = 15
-assignments = []
-
-priors = [1/3, 1/3, 1/3]
-
-N = len(y)
-
-#function to compute the likelihood that a datapoint comes from a certain gaussian i
-def compute_likelihood(mu, sigma, datapoint, i):
-    numerator = f(datapoint, mu, sigma) * priors[i]
-    denominator = f(datapoint, mu1, sigma1) * priors[0] + f(datapoint, mu2, sigma2) * priors[1] + f(datapoint, mu3, sigma3) * priors[2]
-    return numerator / denominator
-
-
-for epoch in range(num_epochs):
-
-    if epoch % PRINT_EVERY == 0:
-        print("\tEpoch: ", epoch)
-        print("\tmu1, sigma1", mu1, sigma1)
-        print("\tmu2, sigma2", mu2, sigma2)
-        print("\tmu3, sigma3", mu3, sigma3)
-        print("\tpriors", priors)
+    #pdf of a gaussian
+    def f(x, mu, sigma):
+        return (1/(sigma * np.sqrt(2 * np.pi))) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
+    
+    #internal function to print parameters
+    def print_parameters():
+        for k in range(gaussians):
+            print("\tmu", k, "sigma", k, parameters[k][0], parameters[k][1])
+        print("\tPriors: ", priors)
         print("\n")
 
-    assignments = []
+    #internal function to compute the likelihood of datapoint coming from gaussian i
+    def compute_likelihood(mu, sigma, datapoint, i):
+        numerator = f(datapoint, mu, sigma) * priors[i]
+        denominator = 0
+        for k in range(gaussians):
+            denominator += f(datapoint, parameters[k][0], parameters[k][1]) * priors[k]
+        return numerator / denominator
+
+    #internal function to reset the parameters
+    def reset():
+        for k in range(gaussians):
+            parameters[k] = [0, 0]
+
+    ###################################
+
+    #Parameters initialization
+    start1 = np.mean(data)
+    start2 = np.std(data)
+
+    parameters = []
+    priors = []
+
+
+    #initialize the parameters of the gaussians
+    for _ in range(gaussians):
+        parameters.append([start1 + get_random(), start2])
     
-    #E-step
-    c1, c2, c3 = 0, 0, 0
-    for i in range(N):
-        first = compute_likelihood(mu1, sigma1, y[i], 0) #likelihood of y[i] comes from gaussian 1
-        second = compute_likelihood(mu2, sigma2, y[i], 1)
-        third = compute_likelihood(mu3, sigma3, y[i], 2)
+    #initialize the priors of the gaussians
+    for _ in range(gaussians):
+        priors.append(1/gaussians)
+
+    N = len(data)
+
+    for epoch in range(num_epochs):
+
+        if print_every != 0 and epoch % print_every == 0:
+            print("Epoch: ", epoch)
+            print_parameters()
+
+        assignments = []
         
-        c1 += first
-        c2 += second
-        c3 += third
+        #E-step
+        for i in range(N):
+            assignments.append([])
+            #for each gaussian, compute the likelihood of the datapoint coming from that gaussian
+            for k in range(gaussians):
+                assignments[i].append(compute_likelihood(parameters[k][0], parameters[k][1], data[i], k))
 
-        assignments.append((first, second, third))
     
-    #M-step
-    mu1, mu2, mu3 = 0, 0, 0
-    sigma1, sigma2, sigma3 = 0, 0, 0
+        #M-step
+        reset()
+        counts = [0] * gaussians
     
-    for i in range(N):
-        mu1 += assignments[i][0] * y[i]
-        mu2 += assignments[i][1] * y[i]
-        mu3 += assignments[i][2] * y[i]
+        #update the parameters of the gaussians with various iterations (to compute sum of the likelihoods abd mean)
+        for i in range(N):
+            for k in range(gaussians):
+                counts[k] += assignments[i][k]
+                parameters[k][0] += assignments[i][k] * data[i]
 
-    mu1 /= c1
-    mu2 /= c2  
-    mu3 /= c3
+        for k in range(gaussians):
+            parameters[k][0] /= counts[k]
+        
+        #std dev computation
+        for i in range(N):
+            for k in range(gaussians):
+                parameters[k][1] += assignments[i][k] * ((data[i] - parameters[k][0])**2)
 
-    for i in range(N):
-        sigma1 += assignments[i][0] * ((y[i] - mu1)**2)
-        sigma2 += assignments[i][1] * ((y[i] - mu2)**2)
-        sigma3 += assignments[i][2] * ((y[i] - mu3)**2)
+        for k in range(gaussians):
+            parameters[k][1] /= counts[k]
+            parameters[k][1] = np.sqrt(parameters[k][1])
+
+        #update the priors of the gaussians
+        for k in range(gaussians):
+            priors[k] = counts[k] / N
     
-    sigma1 /= c1
-    sigma2 /= c2
-    sigma3 /= c3
+    return parameters, assignments, priors
 
-    sigma1 = np.sqrt(sigma1)
-    sigma2 = np.sqrt(sigma2)
-    sigma3 = np.sqrt(sigma3)
+parameters, assignments, priors = em(y, 3, num_epochs=150, print_every=30)
 
-    #priors update
-    priors[0] = c1 / N
-    priors[1] = c2 / N
-    priors[2] = c3 / N
-
+real_mu1, real_sigma1 = -5, np.sqrt(3)
+real_mu2, real_sigma2 = 0, np.sqrt(6)
+real_mu3, real_sigma3 = 4, np.sqrt(1)
+print("Final mu1, sigma1", parameters[0][0], parameters[0][1])
+print("Final mu2, sigma2", parameters[1][0], parameters[1][1])
+print("Final mu3, sigma3", parameters[2][0], parameters[2][1])
+print("Actual mu1, sigma1", real_mu1, real_sigma1)
+print("Actual mu2, sigma2", real_mu2, real_sigma2)
+print("Actual mu3, sigma3", real_mu3, real_sigma3)
 
 ###PLOTTING THE RESULTS
 fig = plt.figure()
@@ -128,29 +159,19 @@ plt.xlabel('Metric values')
 plt.ylabel('Density')
 plt.title('Histogram of data WITHOUT trend')
 
-real_mu1, real_sigma1 = -5, np.sqrt(3)
-real_mu2, real_sigma2 = 0, np.sqrt(6)
-real_mu3, real_sigma3 = 4, np.sqrt(1)
-
 points = np.linspace(-11, 11, 1000)
-plt.plot(points, list(map(lambda x: f(x, mu1, sigma1), points)), color='green', linestyle='dashed')
-plt.plot(points, list(map(lambda x: f(x, mu2, sigma2), points)), color='orange', linestyle='dashed')
-plt.plot(points, list(map(lambda x: f(x, mu3, sigma3), points)), color='purple', linestyle='dashed')
+plt.plot(points, list(map(lambda x: f(x, parameters[0][0], parameters[0][1]), points)), color='green', linestyle='dashed')
+plt.plot(points, list(map(lambda x: f(x, parameters[1][0], parameters[1][1]), points)), color='orange', linestyle='dashed')
+plt.plot(points, list(map(lambda x: f(x, parameters[2][0], parameters[2][1]), points)), color='purple', linestyle='dashed')
 plt.plot(points, list(map(lambda x: f(x, real_mu1, real_sigma1), points)), color='black')
 plt.plot(points, list(map(lambda x: f(x, real_mu2, real_sigma2), points)), color='brown')
 plt.plot(points, list(map(lambda x: f(x, real_mu3, real_sigma3), points)), color='gray')
-print("Final mu1, sigma1", mu1, sigma1)
-print("Final mu2, sigma2", mu2, sigma2)
-print("Final mu3, sigma3", mu3, sigma3)
-print("Actual mu1, sigma1", real_mu1, real_sigma1)
-print("Actual mu2, sigma2", real_mu2, real_sigma2)
-print("Actual mu3, sigma3", real_mu3, real_sigma3)
 
 plt.tight_layout()
 plt.show()
 
 #Few discrepancies betwen the estimated and real distributions used in generating the data
 #Increasing number of epochs we could achieve a better fit
-#Additionally, it is important to note that it's very difficult to assign every point correctly to the right gaussian
-#Since maybe in the generation process it belongs to the tail of one distribution, while maybe here is estiamted to belong to another one
+#Additionally, it is important to note that it's very difficult to assign every point correctly to the right gaussian (according to the generation process)
+#This is because maybe in the generation process it belongs to the tail of one distribution, while maybe here is estiamted to belong to another one
 #Anyway, reasoning in terms of "classification", this can be considered a good and desirable result, since maybe the point was an outlier in the generation process
