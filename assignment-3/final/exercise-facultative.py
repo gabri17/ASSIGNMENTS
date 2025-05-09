@@ -10,8 +10,13 @@ df = pd.read_csv(data_file, header=None, names=['time', 'metric'])
 x = df['time'].values
 y = df['metric'].values
 
+# pdf of a gaussian
+def f(x, mu, sigma):
+    return (1/(sigma * np.sqrt(2 * np.pi))) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
+#
+
 #### REMOVING TREND FROM THE DATA
-m = 5 #best degree 
+m = 5 #best degree
 
 p = np.polyfit(x, y, m)
 yy = np.zeros(len(x))
@@ -22,24 +27,9 @@ for j in range(len(p)):
 residuals = y - yy
 y = residuals
 
-# pdf of a gaussian
-def f(x, mu, sigma):
-    return (1/(sigma * np.sqrt(2 * np.pi))) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
-#
+###########################################
+# EM algorithm to fit a mixture of gaussians to the data
 
-########################################
-####### IMPLEMENTING EXPECTATION MAXIMIZATION ALGORITHM
-
-##EM algorithm to fit a mixture of gaussians to the data
-## Parameters:
-# data: the data to fit
-# gaussians: the number of gaussians to fit
-# num_epochs: the number of epochs to run the algorithm
-# print_every: the number of epochs to print the parameters
-# Returns:
-# parameters: the parameters of the gaussians parameters[i] = [mu, sigma]
-# assignments: the assignments of the data points to the gaussians
-# priors: the priors of the gaussians
 def em(data, gaussians, num_epochs=90, print_every=15):
 
     #Auxiliary functions
@@ -137,40 +127,73 @@ def em(data, gaussians, num_epochs=90, print_every=15):
     
     return parameters, assignments, priors
 
-parameters, assignments, priors = em(y, 3, num_epochs=150, print_every=30)
-
-real_mu1, real_sigma1 = -5, np.sqrt(3)
-real_mu2, real_sigma2 = 0, np.sqrt(6)
-real_mu3, real_sigma3 = 4, np.sqrt(1)
-print("Final mu1, sigma1", parameters[0][0], parameters[0][1])
-print("Final mu2, sigma2", parameters[1][0], parameters[1][1])
-print("Final mu3, sigma3", parameters[2][0], parameters[2][1])
-print("Actual mu1, sigma1", real_mu1, real_sigma1)
-print("Actual mu2, sigma2", real_mu2, real_sigma2)
-print("Actual mu3, sigma3", real_mu3, real_sigma3)
-
-###PLOTTING THE RESULTS
-fig = plt.figure()
-
-BINS=200
-plt.hist(residuals, bins=BINS, color='red', alpha=0.7, density=True)
-plt.xlabel('Metric values')
-plt.ylabel('Density')
-plt.title('Histogram of data WITHOUT trend')
-
+################################################
 points = np.linspace(-11, 11, 1000)
-plt.plot(points, list(map(lambda x: f(x, parameters[0][0], parameters[0][1]), points)), color='green', linestyle='dashed')
-plt.plot(points, list(map(lambda x: f(x, parameters[1][0], parameters[1][1]), points)), color='orange', linestyle='dashed')
-plt.plot(points, list(map(lambda x: f(x, parameters[2][0], parameters[2][1]), points)), color='purple', linestyle='dashed')
-plt.plot(points, list(map(lambda x: f(x, real_mu1, real_sigma1), points)), color='black')
-plt.plot(points, list(map(lambda x: f(x, real_mu2, real_sigma2), points)), color='brown')
-plt.plot(points, list(map(lambda x: f(x, real_mu3, real_sigma3), points)), color='gray')
 
-plt.tight_layout()
+plot = True #change if you want to plot the results or not
+dataset_likelihood = []
+
+MINIMUM_GAUSSIANS = 2
+MAXIMUM_GAUSSIANS = 5
+
+def compute_log_likelihood(data, priors, params):
+    N = len(data)
+    k = len(priors)
+    log_likelihood = 0.0
+    for i in range(N):
+        total = 0.0
+        for j in range(k):
+            total += priors[j] * f(data[i], params[j][0], params[j][1])
+        log_likelihood += np.log(total)
+    return log_likelihood
+
+for gaussian in range(MINIMUM_GAUSSIANS, MAXIMUM_GAUSSIANS + 1):
+    param, likelihoods, priors = em(residuals, gaussian, num_epochs=150, print_every=0)
+    
+    #likelihood is p(x|mu,sigma) * p(mu,sigma) = p(mu,sigma|x)
+
+    L = compute_log_likelihood(residuals, priors, param)
+    aic = -2 * L + 2 * (gaussian * 2)
+    dataset_likelihood.append(aic)
+
+    print("Gaussians: ", gaussian)
+    print("\tDataset AIC: ", dataset_likelihood[-1])
+    for k in range(gaussian):
+        print(f"\t[{k} Gaussian] ({param[k][0]}, {param[k][1]})")
+    
+    if(plot):
+        fig = plt.figure()
+
+        BINS=200
+        plt.hist(residuals, bins=BINS, color='red', alpha=0.7, density=True)
+
+        colors = [
+            'blue', 'red', 'green', 'orange', 'purple', 
+            'cyan', 'magenta', 'brown', 'olive', 'pink', 
+            'gray', 'teal', 'navy', 'maroon', 'lime'
+        ]
+
+        for k in range(gaussian):
+            mu, sigma = param[k][0], param[k][1]
+            plt.plot(points, list(map(lambda x: f(x, mu, sigma), points)), color=colors[k % len(colors)], linestyle='dashed')
+        
+        plt.title('EM with ' + str(gaussian) + ' Gaussians')
+        plt.tight_layout()
+        plt.show()
+
+##### PLOTTING THE RESULTS
+#top model is the one with the lowest AIC
+fig = plt.figure()
+plt.plot(range(1, len(dataset_likelihood)+1), dataset_likelihood, 'o-', color='red')
+plt.title('AIC vs Gaussian')
+plt.xlabel('#Gaussians')
+plt.xticks(range(1, len(dataset_likelihood)+1))
+plt.ylabel('Dataset AIC')
 plt.show()
-
-#Few discrepancies betwen the estimated and real distributions used in generating the data
-#Increasing number of epochs we could achieve a better fit
-#Additionally, it is important to note that it's very difficult to assign every point correctly to the right gaussian (according to the generation process)
-#This is because maybe in the generation process it belongs to the tail of one distribution, while maybe here is estiamted to belong to another one
-#Anyway, reasoning in terms of "classification", this can be considered a good and desirable result, since maybe the point was an outlier in the generation process
+################################################
+"""
+Target:
+real_mu1, real_sigma1^2 = -5, 3
+real_mu2, real_sigma2^2 = 0, 6
+real_mu3, real_sigma3^2 = 4, 1
+"""

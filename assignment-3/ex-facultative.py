@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-#Preparing the dataset
+#### DATA PREPARATION
 
 data_file = 'data_ex1_wt.csv' # absolute path respect to when the script is run
 df = pd.read_csv(data_file, header=None, names=['time', 'metric'])
@@ -10,36 +10,33 @@ df = pd.read_csv(data_file, header=None, names=['time', 'metric'])
 x = df['time'].values
 y = df['metric'].values
 
+# pdf of a gaussian
+def f(x, mu, sigma):
+    return (1/(sigma * np.sqrt(2 * np.pi))) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
+#
+
+#### REMOVING TREND FROM THE DATA
 m = 5 #best degree
 
 p = np.polyfit(x, y, m)
 yy = np.zeros(len(x))
 for j in range(len(p)):
     k = len(p) - j - 1
-    print(k, p[j])
     yy += p[j] * (x**k)
 
 residuals = y - yy
-
 y = residuals
 
 ###########################################
-
-LOW, HIGH = -3, 3
-
-def get_random(low=LOW, high=HIGH):
-    return np.random.rand() * (high-low) + low
-
-def f(x, mu, sigma):
-    return (1/(sigma * np.sqrt(2 * np.pi))) * np.exp( - (x - mu)**2 / (2 * sigma**2) )
+# EM algorithm to fit a mixture of gaussians to the data
 
 def em(data, gaussians, num_epochs=90, print_every=15):
 
     #Auxiliary functions
     ###################################
 
-    #random value in an internval [low, high]
-    def get_random(low, high):
+    #random value in an internval [low, high] - we initialize in this way to speed up the convergence
+    def get_random(low=-np.std(data), high=np.std(data)):
         return np.random.rand() * (high-low) + low
 
     #pdf of a gaussian
@@ -106,7 +103,7 @@ def em(data, gaussians, num_epochs=90, print_every=15):
         reset()
         counts = [0] * gaussians
     
-        #update the parameters of the gaussians with various iterations (to compute sum of the likelihoods, mean and standard deviation)
+        #update the parameters of the gaussians with various iterations (to compute sum of the likelihoods abd mean)
         for i in range(N):
             for k in range(gaussians):
                 counts[k] += assignments[i][k]
@@ -115,6 +112,7 @@ def em(data, gaussians, num_epochs=90, print_every=15):
         for k in range(gaussians):
             parameters[k][0] /= counts[k]
         
+        #std dev computation
         for i in range(N):
             for k in range(gaussians):
                 parameters[k][1] += assignments[i][k] * ((data[i] - parameters[k][0])**2)
@@ -129,14 +127,13 @@ def em(data, gaussians, num_epochs=90, print_every=15):
     
     return parameters, assignments, priors
 
-
 ################################################
 points = np.linspace(-11, 11, 1000)
 
 MINIMUM_GAUSSIANS = 2
 MAXIMUM_GAUSSIANS = 6
 
-plot = False
+plot = True #change if you want to plot the results or not
 dataset_likelihood = []
 
 MINIMUM_GAUSSIANS = 2
@@ -155,7 +152,7 @@ def compute_log_likelihood(data, priors, params):
 
 
 for gaussian in range(MINIMUM_GAUSSIANS, MAXIMUM_GAUSSIANS + 1):
-    param, likelihoods, priors = em(residuals, gaussian, num_epochs=90, print_every=0)
+    param, likelihoods, priors = em(residuals, gaussian, num_epochs=150, print_every=0)
     
     #likelihood is p(x|mu,sigma) * p(mu,sigma) = p(mu,sigma|x)
 
@@ -163,10 +160,10 @@ for gaussian in range(MINIMUM_GAUSSIANS, MAXIMUM_GAUSSIANS + 1):
     aic = -2 * L + 2 * (gaussian * 2)
     dataset_likelihood.append(aic)
 
-    print("Gaussian: ", gaussian)
+    print("Gaussians: ", gaussian)
     print("\tDataset AIC: ", dataset_likelihood[-1])
     for k in range(gaussian):
-        print(f"\t[{k} Gaussians] ({param[k][0]}, {param[k][1]})")
+        print(f"\t[{k} Gaussian] ({param[k][0]}, {param[k][1]})")
     
     if(plot):
         fig = plt.figure()
@@ -180,13 +177,11 @@ for gaussian in range(MINIMUM_GAUSSIANS, MAXIMUM_GAUSSIANS + 1):
             'gray', 'teal', 'navy', 'maroon', 'lime'
         ]
 
-
         for k in range(gaussian):
             mu, sigma = param[k][0], param[k][1]
             plt.plot(points, list(map(lambda x: f(x, mu, sigma), points)), color=colors[k % len(colors)], linestyle='dashed')
         
         plt.title('EM with ' + str(gaussian) + ' Gaussians')
-
         plt.tight_layout()
         plt.show()
 
@@ -201,7 +196,7 @@ plt.show()
 ################################################
 """
 Target:
-real_mu1, real_sigma1 = -5, 3
-real_mu2, real_sigma2 = 0, 6
-real_mu3, real_sigma3 = 4, 1
+real_mu1, real_sigma1^2 = -5, 3
+real_mu2, real_sigma2^2 = 0, 6
+real_mu3, real_sigma3^2 = 4, 1
 """
