@@ -4,7 +4,12 @@ import matplotlib.pyplot as plt
 from sklearn.mixture import GaussianMixture
 
 data_file = 'assignment-3/data_ex1_wt.csv'
-df = pd.read_csv(data_file, header=None, names=['time', 'metric'])
+try:
+    df = pd.read_csv(data_file, header=None, names=['time', 'metric'])
+except FileNotFoundError:
+    data_file = 'data_ex1_wt.csv'
+    df = pd.read_csv(data_file, header=None, names=['time', 'metric'])
+
 residuals = df['metric'].values.reshape(-1, 1)  
 
 k_values = range(1, 6)

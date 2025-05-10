@@ -130,7 +130,7 @@ def em(data, gaussians, num_epochs=90, print_every=15):
 ################################################
 points = np.linspace(-11, 11, 1000)
 
-plot = True #change if you want to plot the results or not
+plot = True #change if you want to plot the results or not - it enables a "visual comparison" of the gaussians
 dataset_likelihood = []
 
 MINIMUM_GAUSSIANS = 2
@@ -162,6 +162,7 @@ for gaussian in range(MINIMUM_GAUSSIANS, MAXIMUM_GAUSSIANS + 1):
         print(f"\t[{k} Gaussian] ({param[k][0]}, {param[k][1]})")
     
     if(plot):
+        #For visual comparison
         fig = plt.figure()
 
         BINS=200
