@@ -174,3 +174,5 @@ plt.show()
 #Additionally, it is important to note that it's very difficult to assign every point correctly to the right gaussian (according to the generation process)
 #This is because maybe in the generation process it belongs to the tail of one distribution, while maybe here is estiamted to belong to another one
 #Anyway, reasoning in terms of "classification", this can be considered a good and desirable result, since maybe the point was an outlier in the generation process
+
+#At the end, with enough number of epochs, the algorithm converges always to the solution that better fits the data

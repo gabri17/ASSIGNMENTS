@@ -15,11 +15,7 @@ y = df['metric'].values
 errors = [] #mean squared errors
 M = 10 #max degree of polynomial
 
-plt.figure(figsize=(16, 4))
-gs = gridspec.GridSpec(1, 2, width_ratios=[2, 1]) 
-ax1 = plt.subplot(gs[0])
-ax2 = plt.subplot(gs[1])
-plt.subplots_adjust(wspace=0.3)
+plt.figure(figsize=(8, 4))
 
 #colormap for better line distinction
 colors = [
@@ -49,18 +45,19 @@ for i in range(1, M+1):
 
     errors.append(np.mean((y - yy)**2))
 
-    ax1.plot(x, yy, label=f'Degree {i}', linewidth=2, color=colors[i - 1])
+    plt.plot(x, yy, label=f'Degree {i}', linewidth=2, color=colors[i - 1])
 
-ax1.scatter(x, y, color='gray', alpha=0.5)
+plt.scatter(x, y, color='gray', alpha=0.5)
 
-ax1.set_title("Time vs Metric", fontsize=14)
-ax1.set_xlabel("Time", fontsize=12)
-ax1.set_ylabel("Metric", fontsize=12)
+plt.title("Time vs Metric", fontsize=14)
+plt.xlabel("Time", fontsize=12)
+plt.ylabel("Metric", fontsize=12)
 
-ax1.set_xticks(ax1.get_xticks())
-ax1.tick_params(axis='x', rotation=45)
-ax1.set_ylim(min(y)-1, max(y)+1)
-ax1.legend(title="Polynomial Degrees")
+plt.tick_params(axis='x', rotation=45)
+plt.ylim(min(y)-1, max(y)+1)
+plt.legend(title="Polynomial Degrees")
+plt.tight_layout()
+plt.show()
 
 #We can graphically see that any polymonial of degree higher than 5 is enough to fit the data
 
@@ -68,11 +65,16 @@ for i in range(len(errors)):
     print(f"Mean Squared Error for degree {i+1}: {errors[i]}")
 
 ### FIND THE OPTIMAL DEGREE
-ax2.plot(range(1, M+1), errors, marker='o', linestyle='-', color='darkred', linewidth=2)
-ax2.set_title("MSE vs Polynomial Degree", fontsize=14)
-ax2.set_xlabel("Polynomial Degree", fontsize=12)
-ax2.set_ylabel("Mean Squared Error", fontsize=12)
-ax2.set_xticks(range(1, M+1))
+plt.figure(figsize=(8, 4))
+plt.plot(range(1, M+1), errors, marker='o', linestyle='-', color='darkred', linewidth=2)
+plt.title("MSE vs Polynomial Degree", fontsize=14)
+plt.xlabel("Polynomial Degree", fontsize=12)
+plt.ylabel("Mean Squared Error", fontsize=12)
+plt.xticks(range(1, M+1))
+
+for i, error in enumerate(errors, start=1):
+    plt.text(i+0.2, error + 0.2, f'{error:.4f}', ha='center', fontsize=10)
+
 
 #We can see it is 5 since after that the error is not decreasing significantly
 plt.tight_layout()
