@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import gridspec
 
 ##### DATA PREPARATION
 data_file = 'data_ex1_wt.csv' # absolute path respect to when the script is run
@@ -31,17 +30,46 @@ colors = [
     "#fabebe"   
 ]
 
-for i in range(1, M+1):
-    coeffs = np.polyfit(x, y, i)
+def least_squares_methods(x, y, degree):
     
+    #compute Vandermonde matrix
+    A = []
+    
+    for i in range(len(x)):
+        A.append([])
+    
+    for j in range(len(x)):
+        for i in range(degree+1):
+            A[j].append(x[j]**i)    
+
+    #transpose of A
+    A_transpose = np.transpose(A)
+    
+    # Compute A' A
+    A_transpose_A = np.dot(A_transpose, A)
+    # Compute (A' A)^-1
+    A_transpose_A_inv = np.linalg.inv(A_transpose_A)
+    # Compute (A' A)^-1 A'
+    A_transpose_A_inv_transpose_A = np.dot(A_transpose_A_inv, A_transpose)
+    # Compute (A' A)^-1 A' y (= b)
+    b = np.dot(A_transpose_A_inv_transpose_A, y)
+
+    return b
+
+for i in range(1, M+1):
+    lib_coeffs = np.polyfit(x, y, i)
+    coeffs = least_squares_methods(x, y, i)
+
     #print the coefficients of the polynomial
     print(f"Degree {i} Coefficients:", coeffs)
+    
+    #just to verify the correctness
+    print(f"Degree {i} Coefficients with library method:", lib_coeffs)
 
     #calculate the polynomial values
     yy = np.zeros(len(x))
     for j in range(len(coeffs)):
-        k = len(coeffs) - j - 1
-        yy += coeffs[j] * (x**k) #first coefficient has the highest degree
+        yy += coeffs[j] * (x**j)
 
     errors.append(np.mean((y - yy)**2))
 

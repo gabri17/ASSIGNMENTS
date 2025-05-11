@@ -13,11 +13,36 @@ y = df['metric'].values
 #### REMOVING TREND FROM THE DATA
 m = 5 #best degree 
 
-p = np.polyfit(x, y, m)
+def least_squares_methods(x, y, degree):
+    
+    #compute Vandermonde matrix
+    A = []
+    
+    for i in range(len(x)):
+        A.append([])
+    
+    for j in range(len(x)):
+        for i in range(degree+1):
+            A[j].append(x[j]**i)    
+
+    #transpose of A
+    A_transpose = np.transpose(A)
+    
+    # Compute A' A
+    A_transpose_A = np.dot(A_transpose, A)
+    # Compute (A' A)^-1
+    A_transpose_A_inv = np.linalg.inv(A_transpose_A)
+    # Compute (A' A)^-1 A'
+    A_transpose_A_inv_transpose_A = np.dot(A_transpose_A_inv, A_transpose)
+    # Compute (A' A)^-1 A' y (= b)
+    b = np.dot(A_transpose_A_inv_transpose_A, y)
+
+    return b
+
+p = least_squares_methods(x, y, m)
 yy = np.zeros(len(x))
 for j in range(len(p)):
-    k = len(p) - j - 1
-    yy += p[j] * (x**k)
+    yy += p[j] * (x**j)
 
 residuals = y - yy
 y = residuals
