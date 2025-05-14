@@ -130,8 +130,9 @@ def em(data, gaussians, num_epochs=90, print_every=15):
 ################################################
 points = np.linspace(-11, 11, 1000)
 
-plot = True #change if you want to plot the results or not - it enables a "visual comparison" of the gaussians
+plot = False #change if you want to plot the results or not - it enables a "visual comparison" of the gaussians
 dataset_likelihood = []
+aics = []
 
 MINIMUM_GAUSSIANS = 2
 MAXIMUM_GAUSSIANS = 5
@@ -153,11 +154,14 @@ for gaussian in range(MINIMUM_GAUSSIANS, MAXIMUM_GAUSSIANS + 1):
     #likelihood is p(x|mu,sigma) * p(mu,sigma) = p(mu,sigma|x)
 
     L = compute_log_likelihood(residuals, priors, param)
-    aic = -2 * L + 2 * (gaussian * 2)
-    dataset_likelihood.append(aic)
+    dataset_likelihood.append(L)
+    k = len(param) * 2 + (len(param) - 1)
+    aic = -2 * L + 2 * k
+    aics.append(aic)
 
     print("Gaussians: ", gaussian)
     print("\tDataset AIC: ", dataset_likelihood[-1])
+    print("\tDataset Log-Likehood: ", L)
     for k in range(gaussian):
         print(f"\t[{k} Gaussian] ({param[k][0]}, {param[k][1]})")
     
@@ -185,12 +189,21 @@ for gaussian in range(MINIMUM_GAUSSIANS, MAXIMUM_GAUSSIANS + 1):
 ##### PLOTTING THE RESULTS
 #top model is the one with the lowest AIC
 fig = plt.figure()
-plt.plot(range(1, len(dataset_likelihood)+1), dataset_likelihood, 'o-', color='red')
+plt.plot(range(1, len(aics)+1), aics, 'o-', color='red')
 plt.title('AIC vs Gaussian')
 plt.xlabel('#Gaussians')
-plt.xticks(range(1, len(dataset_likelihood)+1))
+plt.xticks(range(1, len(aics)+1))
 plt.ylabel('Dataset AIC')
 plt.show()
+
+fig2 = plt.figure()
+plt.plot(range(1, len(dataset_likelihood)+1), dataset_likelihood, 'o-', color='green')
+plt.title('Log-Likelihood vs Gaussian')
+plt.xlabel('#Gaussians')
+plt.xticks(range(1, len(dataset_likelihood)+1))
+plt.ylabel('Dataset Log-Likelihood')
+plt.show()
+
 ################################################
 """
 Target:
