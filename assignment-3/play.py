@@ -164,7 +164,7 @@ def em(data, gaussians, num_epochs=90, print_every=15):
 k = 4
 parameters, assignments, priors = em(y, k, num_epochs=150, print_every=30)
 
-for j in len(parameters):
+for j in range(len(parameters)):
     print(f"{j}", parameters[j][0], parameters[j][1])
 
 ###PLOTTING THE RESULTS
@@ -174,12 +174,12 @@ BINS=200
 plt.hist(y, bins=BINS, color='red', alpha=0.7, density=True)
 plt.xlabel('Metric values')
 plt.ylabel('Density')
-plt.title('Histogram of data WITHOUT trend')
+plt.title('Histogram of data')
 
 colors = ['green', 'orange', 'purple', 'black']
 
 points = np.linspace(-20, 20, 1000)
-for j in len(parameters):
+for j in range(len(parameters)):
     plt.plot(points, list(map(lambda x: f(x, parameters[j][0], parameters[j][1]), points)), color=colors[j % len(parameters)], linestyle='dashed')
 
 plt.tight_layout()
