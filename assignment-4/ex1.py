@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 arrival_rate = 1   #lambda
-departure_rate = 2 #mu
+departure_rate = 4 #mu
 
 #mu > lambda
 
@@ -75,88 +75,265 @@ def compute_event_queue(arrival_rate, service_rate, N):
 
 events_list = compute_event_queue(arrival_rate, departure_rate, 50)
 
-current_time = 0
-index_event = 0
-
-server_status = 0
-in_queue = 0
-last_event_time = 0
-
-time_server_full = 0
-area_server = 0
-area_queue = 0
-
-server_status_history = [0]
-queue_length_history = [0]
-times = [0]
-system_history = [0]
-area_system = 0
-
-
-while index_event < len(events_list):
-    event = events_list[index_event]
-    index_event += 1
-
-    current_time = event[0]
-    type_event = event[1]
-
+def simulate_with_list(events_list):
     
-    area_server += (current_time - last_event_time) * server_status
-    area_queue += in_queue * (current_time - last_event_time)
-    area_system += in_queue * (current_time - last_event_time) + (current_time - last_event_time) * server_status
+    current_time = 0
+    index_event = 0
+
+    server_status = 0
+    in_queue = 0
+    last_event_time = 0
+
+    time_server_full = 0
+    area_server = 0
+    area_queue = 0
+
+    server_status_history = [0]
+    queue_length_history = [0]
+    times = [0]
+    system_history = [0]
+    area_system = 0
 
 
-    if type_event == 'a':
-        if server_status == 0:
-            server_status = 1
-        else:
-            in_queue += 1
-    else:
+    while index_event < len(events_list):
+        event = events_list[index_event]
+        index_event += 1
+
+        current_time = event[0]
+        type_event = event[1]
+
         
-        server_status = 0
+        area_server += (current_time - last_event_time) * server_status
+        area_queue += in_queue * (current_time - last_event_time)
+        area_system += in_queue * (current_time - last_event_time) + (current_time - last_event_time) * server_status
 
-        if in_queue != 0:
-            server_status = 1
-            in_queue -= 1
 
-    print(f"Area Q(t) {area_queue:.3f}, Area U(t) {area_server:.3f}, Area system {area_system:3f}")
-    
-    times.append(current_time)
-    server_status_history.append(server_status)
-    queue_length_history.append(in_queue)
-    system_history.append(server_status+in_queue)
+        if type_event == 'a':
+            if server_status == 0:
+                server_status = 1
+            else:
+                in_queue += 1
+        else:
+            
+            server_status = 0
 
-    last_event_time = current_time
+            if in_queue != 0:
+                server_status = 1
+                in_queue -= 1
+
+        print(f"Area Q(t) {area_queue:.3f}, Area U(t) {area_server:.3f}, Area system {area_system:3f}")
+        
+        times.append(current_time)
+        server_status_history.append(server_status)
+        queue_length_history.append(in_queue)
+        system_history.append(server_status+in_queue)
+
+        last_event_time = current_time
+
+    plot = False
+
+    if(plot):
+        p = arrival_rate/departure_rate
+        print(f"Average number of packets in the system {(p*(1-p)):.3f}")
+        print(f"Empirical number of packets in the system {(area_system / current_time):.3f}")
+
+        max_y = max(max(system_history), max(queue_length_history), max(server_status_history))
+
+        plt.figure(figsize=(10, 4))
+
+        plt.subplot(1, 3, 1)
+        plt.plot(times, server_status_history, drawstyle='steps-post')
+        plt.xlabel("Time")
+        plt.ylabel("Server status")
+        plt.yticks(np.arange(0, 3, 1)) 
+        plt.title("Server Status Over Time")
+
+        plt.subplot(1, 3, 2)
+        plt.plot(times, queue_length_history, drawstyle='steps-post', color='orange')
+        plt.xlabel("Time")
+        plt.ylabel("Queue length")
+        plt.yticks(np.arange(0, max_y+2, 1))
+        plt.title("Queue Length Over Time")
+
+        plt.subplot(1, 3, 3)
+        plt.plot(times, system_history, drawstyle='steps-post', color='green')
+        plt.xlabel("Time")
+        plt.ylabel("System packets")
+        plt.yticks(np.arange(0, max_y+2, 1))
+        plt.title("System packets Over Time")
+
+
+        plt.tight_layout()
+        plt.show()
+
+    return area_system / current_time
+
+replications = 30
+averages = []
+
+for j in range(replications):
+    events_list = compute_event_queue(arrival_rate, departure_rate, 50)
+    averages.append(simulate_with_list(events_list))
 
 p = arrival_rate/departure_rate
-print(f"Average number of packets in the system {(p*(1-p)):.3f}")
-print(f"Empirical number of packets in the system {(area_system / current_time):.3f}")
+print(f"Avg empirical {np.mean(averages):.3f}")
+print(f"Avg theoretical {p/(1-p):.3f}")
 
-max_y = max(max(system_history), max(queue_length_history), max(server_status_history))
+def simulate_with_no_list(arrival_rate, departure_rate):
+    current_time = 0
+    index_event = 0
 
-plt.figure(figsize=(10, 4))
+    server_status = 0
+    in_queue = 0
+    last_event_time = 0
 
-plt.subplot(1, 3, 1)
-plt.plot(times, server_status_history, drawstyle='steps-post')
-plt.xlabel("Time")
-plt.ylabel("Server status")
-plt.yticks(np.arange(0, 3, 1)) 
-plt.title("Server Status Over Time")
+    area_server = 0
+    area_queue = 0
 
-plt.subplot(1, 3, 2)
-plt.plot(times, queue_length_history, drawstyle='steps-post', color='orange')
-plt.xlabel("Time")
-plt.ylabel("Queue length")
-plt.yticks(np.arange(0, max_y+2, 1))
-plt.title("Queue Length Over Time")
+    server_status_history = [0]
+    queue_length_history = [0]
+    times = [0]
+    system_history = [0]
+    area_system = 0
 
-plt.subplot(1, 3, 3)
-plt.plot(times, system_history, drawstyle='steps-post', color='green')
-plt.xlabel("Time")
-plt.ylabel("System packets")
-plt.yticks(np.arange(0, max_y+2, 1))
-plt.title("System packets Over Time")
+    events_list = [(np.random.exponential(1 / arrival_rate), 'a')]
+
+    while True:
+        event = events_list.pop(0)
+        print(f"Current event is \'{event[1]}\' at time {event[0]}")
+
+        current_time = event[0]
+        type_event = event[1]
+
+        
+        area_server += (current_time - last_event_time) * server_status
+        area_queue += in_queue * (current_time - last_event_time)
+        area_system += in_queue * (current_time - last_event_time) + (current_time - last_event_time) * server_status
 
 
-plt.tight_layout()
-plt.show()
+        if type_event == 'a':
+            next_arrival = (current_time + np.random.exponential(1 / arrival_rate), 'a')
+            events_list.append(next_arrival)
+
+            events_list = sorted(events_list, key=lambda x: x[0])
+
+            if server_status == 0:
+                server_status = 1
+                service_time = np.random.exponential(1 / departure_rate)
+                next_departure = (current_time + service_time, 'd')
+                events_list.append(next_departure)
+                events_list = sorted(events_list, key=lambda x: x[0])
+            else:
+                in_queue += 1
+        else:
+            
+            server_status = 0
+
+            if in_queue != 0:
+                server_status = 1
+                service_time = np.random.exponential(1 / departure_rate)
+                next_departure = (current_time + service_time, 'd')
+                events_list.append(next_departure)
+                events_list = sorted(events_list, key=lambda x: x[0])
+                in_queue -= 1
+
+        print(f"Area Q(t) {area_queue:.3f}, Area U(t) {area_server:.3f}, Area system {area_system:3f}")
+        
+        times.append(current_time)
+        server_status_history.append(server_status)
+        queue_length_history.append(in_queue)
+        system_history.append(server_status+in_queue)
+
+        last_event_time = current_time
+
+        p = arrival_rate/departure_rate
+        print(f"Average number of packets in the system {(p*(1-p)):.3f}")
+        print(f"Empirical number of packets in the system {(area_system / current_time):.3f}")
+        print(f"Queue length {in_queue}")
+
+        user_input = input("Premi Invio per continuare, qualsiasi altro tasto + Invio per fermare: \n")
+        if user_input != "":
+            break
+
+
+    #finishing last events scheduled
+    while len(events_list) != 0:
+        event = events_list.pop(0)
+        print(f"Current event is \'{event[1]}\' at time {event[0]}")
+
+        current_time = event[0]
+        type_event = event[1]
+
+        
+        area_server += (current_time - last_event_time) * server_status
+        area_queue += in_queue * (current_time - last_event_time)
+        area_system += in_queue * (current_time - last_event_time) + (current_time - last_event_time) * server_status
+
+
+        if type_event == 'a':
+
+            if server_status == 0:
+                service_time = np.random.exponential(1 / departure_rate)
+                next_departure = (current_time + service_time, 'd')
+                events_list.append(next_departure)
+                events_list = sorted(events_list, key=lambda x: x[0])
+                server_status = 1
+            else:
+                in_queue += 1
+        else:
+            
+            server_status = 0
+
+            if in_queue != 0:
+                server_status = 1
+                service_time = np.random.exponential(1 / departure_rate)
+                next_departure = (current_time + service_time, 'd')
+                events_list.append(next_departure)
+                events_list = sorted(events_list, key=lambda x: x[0])
+                in_queue -= 1
+
+        print(f"Area Q(t) {area_queue:.3f}, Area U(t) {area_server:.3f}, Area system {area_system:3f}")
+        
+        times.append(current_time)
+        server_status_history.append(server_status)
+        queue_length_history.append(in_queue)
+        system_history.append(server_status+in_queue)
+
+        last_event_time = current_time
+
+        p = arrival_rate/departure_rate
+        print(f"Average number of packets in the system {(p*(1-p)):.3f}")
+        print(f"Empirical number of packets in the system {(area_system / current_time):.3f}")
+        print(f"Queue length {in_queue}\n")
+
+
+    max_y = max(max(system_history), max(queue_length_history), max(server_status_history))
+
+    plt.figure(figsize=(10, 4))
+
+    plt.subplot(1, 3, 1)
+    plt.plot(times, server_status_history, drawstyle='steps-post')
+    plt.xlabel("Time")
+    plt.ylabel("Server status")
+    plt.yticks(np.arange(0, 3, 1)) 
+    plt.title("Server Status Over Time")
+
+    plt.subplot(1, 3, 2)
+    plt.plot(times, queue_length_history, drawstyle='steps-post', color='orange')
+    plt.xlabel("Time")
+    plt.ylabel("Queue length")
+    plt.yticks(np.arange(0, max_y+2, 1))
+    plt.title("Queue Length Over Time")
+
+    plt.subplot(1, 3, 3)
+    plt.plot(times, system_history, drawstyle='steps-post', color='green')
+    plt.xlabel("Time")
+    plt.ylabel("System packets")
+    plt.yticks(np.arange(0, max_y+2, 1))
+    plt.title("System packets Over Time")
+
+
+    plt.tight_layout()
+    plt.show()
+
+#simulate_with_no_list(2, 3)
