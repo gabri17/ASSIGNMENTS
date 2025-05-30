@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-arrival_rate = 1   #lambda
-departure_rate = 4 #mu
+arrival_rate = 1  #lambda
+departure_rate = 2 #mu
 
 #mu > lambda
 
@@ -22,7 +22,6 @@ departure_rate = 4 #mu
 #end of simulation
 #arrival of packet
 #departure of packet
-
 #ordered queue/list where
 """
 - event linked to the next in time
@@ -43,13 +42,18 @@ def compute_event_queue(arrival_rate, service_rate, N):
 
     #departure times
     departure_times = np.zeros(N)
+    
+    time_spent_in_sys = []
 
     for i in range(N):
+        
         if i == 0:
             departure_times[i] = arrival_times[i] + service_times[i]
         else:
             departure_times[i] = max(arrival_times[i], departure_times[i - 1]) + service_times[i]
             #depending if server is free when event arrives or it's busy, so it must way to i-1 event to go
+        
+        time_spent_in_sys.append(departure_times[i]-arrival_times[i])
 
     arrivals_index = 0
     departure_index = 0
@@ -71,11 +75,11 @@ def compute_event_queue(arrival_rate, service_rate, N):
         event_queue.append((float(departure_times[departure_index]), 'd'))
         departure_index += 1
 
-    return event_queue
+    return event_queue, time_spent_in_sys
 
-events_list = compute_event_queue(arrival_rate, departure_rate, 50)
+events_list, time_spent_in_sys = compute_event_queue(arrival_rate, departure_rate, 150)
 
-def simulate_with_list(events_list):
+def simulate_with_list(events_list, plot=False):
     
     current_time = 0
     index_event = 0
@@ -93,7 +97,6 @@ def simulate_with_list(events_list):
     times = [0]
     system_history = [0]
     area_system = 0
-
 
     while index_event < len(events_list):
         event = events_list[index_event]
@@ -121,7 +124,7 @@ def simulate_with_list(events_list):
                 server_status = 1
                 in_queue -= 1
 
-        print(f"Area Q(t) {area_queue:.3f}, Area U(t) {area_server:.3f}, Area system {area_system:3f}")
+        #print(f"AVG in queue {(area_queue/current_time):.3f}, AVG in queue in server {(area_server/current_time):.3f}, AVG in system {(area_system/current_time):3f}")
         
         times.append(current_time)
         server_status_history.append(server_status)
@@ -129,8 +132,6 @@ def simulate_with_list(events_list):
         system_history.append(server_status+in_queue)
 
         last_event_time = current_time
-
-    plot = False
 
     if(plot):
         p = arrival_rate/departure_rate
@@ -166,17 +167,21 @@ def simulate_with_list(events_list):
         plt.tight_layout()
         plt.show()
 
+    print(f"AVG in queue {(area_queue/current_time):.3f}, AVG in server {(area_server/current_time):.3f}, AVG in system {(area_system/current_time):3f}")
     return area_system / current_time
 
-replications = 30
+replications = 50
 averages = []
+averages_second_formula = []
 
 for j in range(replications):
-    events_list = compute_event_queue(arrival_rate, departure_rate, 50)
+    events_list, time_spent_in_sys = compute_event_queue(arrival_rate, departure_rate, 50)
     averages.append(simulate_with_list(events_list))
+    averages_second_formula.append(np.mean(time_spent_in_sys)*arrival_rate)
+    print(f"[Formula 2]Avg empirical {np.mean(averages_second_formula):.3f}, std dev {np.std(averages_second_formula):.3f}\n")
 
 p = arrival_rate/departure_rate
-print(f"Avg empirical {np.mean(averages):.3f}")
+print(f"Avg empirical {np.mean(averages):.3f}, std dev {np.std(averages):.3f}")
 print(f"Avg theoretical {p/(1-p):.3f}")
 
 def simulate_with_no_list(arrival_rate, departure_rate):
