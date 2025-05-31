@@ -179,7 +179,7 @@ averages_waiting = []
 averages_services = []
 
 for j in range(replications):
-    events_list = compute_event_queue(arrival_rate, departure_rate, 50)
+    events_list = compute_event_queue(arrival_rate, departure_rate, N)
     (avg_time_in_sys, avg_time_in_ser, avg_time_in_que), waiting_times, service_times = simulate_with_list(events_list)
     averages_sys.append(avg_time_in_sys) #sample mean from each 
     averages_ser.append(avg_time_in_ser)
@@ -191,7 +191,7 @@ p = arrival_rate/departure_rate
 
 
 print("\n")
-print(f"Average thoeretical service time {(1/departure_rate):.3f}, Average thoeretical waiting time {(p/(departure_rate-arrival_rate)):.3f}, Average thoeretical system time {p/(1-p):.3f}\n")
+print(f"Average thoeretical service time {(1/departure_rate):.3f}, Average thoeretical waiting time {(p/(departure_rate-arrival_rate)):.3f}, Average thoeretical system time {1/(departure_rate-arrival_rate):.3f}\n")
 print(f"Avg empirical in system (computed from statitistc) {np.mean(averages_sys):.3f}, std dev {np.std(averages_sys):.3f}")
 print(f"Avg in system times {np.mean(averages_services) + np.mean(averages_waiting):.3f}\n")
 print(f"Avg empirical in queue (computed from statitistc) {np.mean(averages_que):.3f}, std dev {np.std(averages_que):.3f}")
