@@ -1,33 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
 
 arrival_rate = 1  #lambda
 departure_rate = 2 #mu
+N = 150
 
-#mu > lambda
+parser = argparse.ArgumentParser(description="Simulazione M/M/1")
+parser.add_argument("--arrival_rate", type=float, default=1, help="Arrival rate (lambda, def 1)")
+parser.add_argument("--departure_rate", type=float, default=2, help="Departure rate (mu, def 2)")
+parser.add_argument("--N", type=int, default=150, help="Events number in queue (def 150)")
+args = parser.parse_args()
 
-#both arrivals are POISSON DISTRIBUTION
-#inter-arrivals and inter-departures are EXPONENTIALLY DISTRIBUTED
+arrival_rate = args.arrival_rate
+departure_rate = args.departure_rate
+N = args.N
 
-#Estimate:
-"""
-- average packets in queue
-- average packets in server
-- average usage of system (sum)
-"""
-
-#one server, one queue with FIFO policy
-
-#start of simulation
-#end of simulation
-#arrival of packet
-#departure of packet
-#ordered queue/list where
-"""
-- event linked to the next in time
-- e1 at t1, e2 at t2, e3 at t3:
-- if there is e4 at t4 s.tt t2 < t4 < t3 i put: e1 e2 e4 e3
-"""
+print(arrival_rate, departure_rate, N)
 
 def compute_event_queue(arrival_rate, service_rate, N):
     
@@ -43,8 +32,6 @@ def compute_event_queue(arrival_rate, service_rate, N):
     #departure times
     departure_times = np.zeros(N)
     
-    time_spent_in_sys = []
-
     for i in range(N):
         
         if i == 0:
@@ -53,8 +40,6 @@ def compute_event_queue(arrival_rate, service_rate, N):
             departure_times[i] = max(arrival_times[i], departure_times[i - 1]) + service_times[i]
             #depending if server is free when event arrives or it's busy, so it must way to i-1 event to go
         
-        time_spent_in_sys.append(departure_times[i]-arrival_times[i])
-
     arrivals_index = 0
     departure_index = 0
     event_queue = []
@@ -75,9 +60,9 @@ def compute_event_queue(arrival_rate, service_rate, N):
         event_queue.append((float(departure_times[departure_index]), 'd'))
         departure_index += 1
 
-    return event_queue, time_spent_in_sys
+    return event_queue
 
-events_list, time_spent_in_sys = compute_event_queue(arrival_rate, departure_rate, 150)
+events_list = compute_event_queue(arrival_rate, departure_rate, N)
 
 def simulate_with_list(events_list, plot=False):
     
@@ -88,7 +73,6 @@ def simulate_with_list(events_list, plot=False):
     in_queue = 0
     last_event_time = 0
 
-    time_server_full = 0
     area_server = 0
     area_queue = 0
 
@@ -97,6 +81,12 @@ def simulate_with_list(events_list, plot=False):
     times = [0]
     system_history = [0]
     area_system = 0
+
+    empirical_arrival_times = []
+    empirical_service_times = []
+    empirical_departure_times = []
+    waiting_times = []
+    service_times = []
 
     while index_event < len(events_list):
         event = events_list[index_event]
@@ -112,17 +102,20 @@ def simulate_with_list(events_list, plot=False):
 
 
         if type_event == 'a':
+            empirical_arrival_times.append(current_time)
             if server_status == 0:
                 server_status = 1
+                empirical_service_times.append(current_time)
             else:
                 in_queue += 1
         else:
-            
+            empirical_departure_times.append(current_time)
             server_status = 0
 
             if in_queue != 0:
                 server_status = 1
                 in_queue -= 1
+                empirical_service_times.append(current_time)
 
         #print(f"AVG in queue {(area_queue/current_time):.3f}, AVG in queue in server {(area_server/current_time):.3f}, AVG in system {(area_system/current_time):3f}")
         
@@ -168,21 +161,44 @@ def simulate_with_list(events_list, plot=False):
         plt.show()
 
     print(f"AVG in queue {(area_queue/current_time):.3f}, AVG in server {(area_server/current_time):.3f}, AVG in system {(area_system/current_time):3f}")
-    return area_system / current_time
+    
+    for i in range(len(empirical_service_times)):
+        waiting_times.append(empirical_service_times[i] - empirical_arrival_times[i])
+    
+    for i in range(len(empirical_service_times)):
+        service_times.append(empirical_departure_times[i] - empirical_service_times[i])
+
+    return (area_system / current_time, area_server/current_time, area_queue/current_time), waiting_times, service_times
 
 replications = 50
-averages = []
+averages_sys = []
+averages_ser = []
+averages_que = []
 averages_second_formula = []
+averages_waiting = []
+averages_services = []
 
 for j in range(replications):
-    events_list, time_spent_in_sys = compute_event_queue(arrival_rate, departure_rate, 50)
-    averages.append(simulate_with_list(events_list))
-    averages_second_formula.append(np.mean(time_spent_in_sys)*arrival_rate)
-    print(f"[Formula 2]Avg empirical {np.mean(averages_second_formula):.3f}, std dev {np.std(averages_second_formula):.3f}\n")
+    events_list = compute_event_queue(arrival_rate, departure_rate, 50)
+    (avg_time_in_sys, avg_time_in_ser, avg_time_in_que), waiting_times, service_times = simulate_with_list(events_list)
+    averages_sys.append(avg_time_in_sys) #sample mean from each 
+    averages_ser.append(avg_time_in_ser)
+    averages_que.append(avg_time_in_que)
+    averages_waiting.append(np.mean(waiting_times))
+    averages_services.append(np.mean(service_times))
 
 p = arrival_rate/departure_rate
-print(f"Avg empirical {np.mean(averages):.3f}, std dev {np.std(averages):.3f}")
-print(f"Avg theoretical {p/(1-p):.3f}")
+
+
+print("\n")
+print(f"Average thoeretical service time {(1/departure_rate):.3f}, Average thoeretical waiting time {(p/(departure_rate-arrival_rate)):.3f}, Average thoeretical system time {p/(1-p):.3f}\n")
+print(f"Avg empirical in system (computed from statitistc) {np.mean(averages_sys):.3f}, std dev {np.std(averages_sys):.3f}")
+print(f"Avg in system times {np.mean(averages_services) + np.mean(averages_waiting):.3f}\n")
+print(f"Avg empirical in queue (computed from statitistc) {np.mean(averages_que):.3f}, std dev {np.std(averages_que):.3f}")
+print(f"Avg waiting times {np.mean(averages_waiting):.3f}, std dev {np.std(averages_waiting):.3f}\n")
+print(f"Avg empirical in server (computed from statitistc) {np.mean(averages_ser):.3f}, std dev {np.std(averages_ser):.3f}")
+print(f"Avg service times {np.mean(averages_services):.3f}, std dev {np.std(averages_services):.3f}\n")
+
 
 def simulate_with_no_list(arrival_rate, departure_rate):
     current_time = 0
