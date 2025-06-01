@@ -64,20 +64,20 @@ class MM1QueueSimulator:
         self.schedule_event(Event(self.generate_time(self.arrival_rate), "arrival"))
         self.schedule_event(Event(self.simulation_time, "end"))
 
-        print(f"Simulation started at time {self.current_time}")
+       # print(f"Simulation started at time {self.current_time}")
 
         while self.event_queue:
             event = heapq.heappop(self.event_queue)
             self.current_time = event.time
 
             if event.event_type == "arrival":
-                print(f"Arrival at time {self.current_time} [in system {self.queue_length + int(self.server_busy)}]")
+                #print(f"Arrival at time {self.current_time} [in system {self.queue_length + int(self.server_busy)}]")
                 self.handle_arrival()
             elif event.event_type == "departure":
-                print(f"Departure at time {self.current_time} [in system {self.queue_length + int(self.server_busy)}]")
+                #print(f"Departure at time {self.current_time} [in system {self.queue_length + int(self.server_busy)}]")
                 self.handle_departure()
             elif event.event_type == "end":
-                print(f"Simulation ended at time {self.current_time} [in system {self.queue_length + int(self.server_busy)}]. I still could need to handle some last departure events")
+                #print(f"Simulation ended at time {self.current_time} [in system {self.queue_length + int(self.server_busy)}]. I still could need to handle some last departure events")
                 break
 
         #process last departures in the queue
@@ -89,7 +89,7 @@ class MM1QueueSimulator:
                 print(f"SHOULD NOT HAPPEN")
                 self.handle_arrival()
             elif event.event_type == "departure":
-                print(f"Departure at time {self.current_time} [in system {self.queue_length + int(self.server_busy)}]")
+               # print(f"Departure at time {self.current_time} [in system {self.queue_length + int(self.server_busy)}]")
                 self.handle_departure()
             elif event.event_type == "end":
                 print(f"SHOULD NOT HAPPEN")
@@ -199,8 +199,8 @@ class MM1QueueSimulator:
 
         points = np.linspace(0, self.simulation_time + 2, len(self.waiting_times))
 
-        plt.plot(points, self.waiting_times, color="red")
-        plt.plot(points, list(map(lambda x : 1/(self.service_rate - self.arrival_rate), points)), color="black")
+        plt.hist(self.waiting_times, color="red", density=True)
+        #plt.plot(points, list(map(lambda x : 1/(self.service_rate - self.arrival_rate), points)), color="black")
         plt.xlabel("Time")
         plt.ylabel("Waiting time in System")
         plt.title("Waiting time in System Over Time")
@@ -226,22 +226,25 @@ if __name__ == "__main__":
     #parameters
     arrival_rate = 1.0  #λ
     service_rate = 2.0  #μ
-    simulation_time = 100.0  #seconds
-    replications = 100
+    simulation_time = 1000.0  #seconds
+    replications = 500
 
     parser = argparse.ArgumentParser(description="M/M/1 Queue Simulation")
     parser.add_argument("--arrival_rate", type=float, default=arrival_rate, help=f"Arrival rate (λ, default {arrival_rate})")
-    parser.add_argument("--departure_rate", type=float, default=service_rate, help=f"Departure rate (μ, default {service_rate})")
+    parser.add_argument("--service_rate", type=float, default=service_rate, help=f"Service rate (μ, default {service_rate})")
     parser.add_argument("--simulation_time", type=float, default=simulation_time, help=f"Time of the simulation (default {simulation_time})")
     parser.add_argument("--replications", type=int, default=replications, help=f"Number of independent replications we do (default {replications})")
     args = parser.parse_args()
 
     arrival_rate = args.arrival_rate
-    departure_rate = args.departure_rate
+    service_rate = args.service_rate
+    if(service_rate <= arrival_rate):
+        print("Cannot continue!  Must have μ > λ!")
+        exit(0)
     simulation_time = args.simulation_time
     replications = args.replications
 
-    print(f"You are running the simulatior with an arrival_rate of {arrival_rate}, a service_rate of {service_rate} and a simulation_time of {simulation_time}")
+    print(f"You are running the simulator with an arrival_rate of {arrival_rate}, a service_rate of {service_rate} and a simulation_time of {simulation_time}, for {replications} independent replications")
 
     #We do independent replications
     empirical_averages = []
@@ -251,7 +254,7 @@ if __name__ == "__main__":
         simulator = MM1QueueSimulator(arrival_rate, service_rate, simulation_time)
         simulator.simulate()
         #simulator.plot_results()
-        simulator.plot_waiting_times()
+        #simulator.plot_waiting_times()
 
         #Comparisons
         rho = arrival_rate / service_rate
@@ -260,7 +263,7 @@ if __name__ == "__main__":
         empirical_avg = simulator.compute_average()
         #print(f"Empirical average number of packets in system: {empirical_avg}")
         empirical_averages.append(empirical_avg)
-        empirical_avg_warmup = simulator.compute_average_with_warmup(warmup_time=0.25)
+        empirical_avg_warmup = simulator.compute_average_with_warmup(warmup_time=0.5)
         empirical_averages_warmup.append(empirical_avg_warmup)
 
     rho = arrival_rate / service_rate
