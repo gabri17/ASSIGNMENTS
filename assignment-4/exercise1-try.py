@@ -46,9 +46,8 @@ class MM1QueueSimulator:
         self.queue_length = 0
         self.packets_in_system = []
 
-        self.waiting_times = []
-        self.empirical_service_times = []
-        self.empirical_arrival_times = []
+        self.area_system = 0
+        self.last_event_time = 0
 
     """
     Add an event in queue.
@@ -65,10 +64,19 @@ class MM1QueueSimulator:
         self.schedule_event(Event(self.simulation_time, "end"))
 
        # print(f"Simulation started at time {self.current_time}")
+        self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
 
         while self.event_queue:
+
+            self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
+
+
+            self.area_system += (self.queue_length + int(int(self.server_busy))) * (self.current_time - self.last_event_time)
+
             event = heapq.heappop(self.event_queue)
             self.current_time = event.time
+            self.area_system += (self.queue_length + int(int(self.server_busy))) * (self.current_time - self.last_event_time)
+            self.last_event_time = event.time
 
             if event.event_type == "arrival":
                 #print(f"Arrival at time {self.current_time} [in system {self.queue_length + int(self.server_busy)}]")
@@ -94,22 +102,20 @@ class MM1QueueSimulator:
             elif event.event_type == "end":
                 print(f"SHOULD NOT HAPPEN")
         
-        self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
-
-
-
+        #self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
 
     def handle_arrival(self):
         #record the number of packets in the system: we store the packest in the system at the current time
-        self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
-        self.empirical_arrival_times.append(self.current_time)
+        #self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
 
         if self.server_busy:
             self.queue_length += 1
         else:
             self.server_busy = True
-            self.empirical_service_times.append(self.current_time)
             self.schedule_event(Event(self.current_time + self.generate_time(self.service_rate), "departure"))
+        
+        #self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
+
 
         #schedule the next arrival - only if it can arrive until the end of the simualtion
         next_arrival = self.current_time + self.generate_time(self.arrival_rate)
@@ -118,14 +124,15 @@ class MM1QueueSimulator:
 
     def handle_departure(self):
         #record the number of packets in the system: we store the packest in the system at the current time
-        self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
+        #self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
 
         if self.queue_length > 0:
             self.queue_length -= 1
-            self.empirical_service_times.append(self.current_time)
             self.schedule_event(Event(self.current_time + self.generate_time(self.service_rate), "departure"))
         else:
             self.server_busy = False
+        
+        #self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
 
     #draw from an exponential
     def generate_time(self, rate):
@@ -161,13 +168,18 @@ class MM1QueueSimulator:
             total_time += delta_time    
         
         average_packets = weighted_sum / total_time
+        #return self.area_system / total_time
         return average_packets
 
     """
     Method to compute the average empirically from the data, with a warmup period
     """
     def compute_average_with_warmup(self, warmup_time=0.1):
+
+        last_event_time, _ = self.packets_in_system[len(self.packets_in_system) - 1]
         
+        return self.area_system / last_event_time
+
         last_event_time, _ = self.packets_in_system[len(self.packets_in_system) - 1]
         warmup_limit = last_event_time * warmup_time
         filtered_data = [(t, p) for t, p in self.packets_in_system if t >= warmup_limit]
@@ -188,24 +200,8 @@ class MM1QueueSimulator:
             total_time += delta_time    
         
         average_packets = weighted_sum / total_time
+        
         return average_packets
-
-    def compute_average_waiting_time(self):
-        for i in range(len(self.empirical_service_times)):
-            self.waiting_times.append(self.empirical_service_times[i] - self.empirical_arrival_times[i])
-    
-    def plot_waiting_times(self):
-        self.compute_average_waiting_time()
-
-        points = np.linspace(0, self.simulation_time + 2, len(self.waiting_times))
-
-        plt.hist(self.waiting_times, color="red", density=True)
-        #plt.plot(points, list(map(lambda x : 1/(self.service_rate - self.arrival_rate), points)), color="black")
-        plt.xlabel("Time")
-        plt.ylabel("Waiting time in System")
-        plt.title("Waiting time in System Over Time")
-        plt.show()
-
 
 
 def confidence_interval(data, confidence_level=0.95):
