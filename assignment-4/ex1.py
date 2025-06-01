@@ -219,7 +219,7 @@ def simulate_with_no_list(arrival_rate, departure_rate):
 
     events_list = [(np.random.exponential(1 / arrival_rate), 'a')]
 
-    while True:
+    while True: #while count_arrivals < N
         event = events_list.pop(0)
         print(f"Current event is \'{event[1]}\' at time {event[0]}")
 

@@ -179,6 +179,7 @@ def simulate_with_list(events_list, plot=False):
 
     return waiting_times, service_times, area_queue/current_time
 
+
 replications = 1
 averages_waiting = []
 averages_services = []

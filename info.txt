@@ -1,0 +1,12 @@
+model is stable only if arrival < departure, otherwise queue will grow indefinitevly long.
+
+arrival = lambda (a)
+departure = mu (d)
+
+statistics:
+- p = a/d: utilization buffer
+- average number of packets in the system in stationary
+conditions (after initialization, on long term) p * (1-p)
+- probability it contains i customers (queue + server): (1-p) * p^i
+
+- 
