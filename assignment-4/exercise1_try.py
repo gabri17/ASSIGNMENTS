@@ -33,6 +33,9 @@ Attributes:
     server_busy: True or False to determine is the server is busy or not
     queue_length: we save the number of packets in queue
     packets_in_system: packets in the system at a given time
+    packets_in_queue: packets in the queue at a given time
+    arrival_times_queue: it represents the queue of the system
+    time_in_system: it stores, for each packet, how much time it stayed in the system
 """
 class MM1QueueSimulator:
     
@@ -45,6 +48,10 @@ class MM1QueueSimulator:
         self.server_busy = False
         self.queue_length = 0
         self.packets_in_system = []
+        self.packets_in_queue = []
+
+        self.arrival_times_queue = []
+        self.time_in_system = []
     """
     Add an event in queue.
     """
@@ -77,6 +84,7 @@ class MM1QueueSimulator:
                 break
 
             self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
+            self.packets_in_queue.append((self.current_time, self.queue_length))
 
 
         #process last departures in the queue
@@ -95,7 +103,8 @@ class MM1QueueSimulator:
                 print(f"SHOULD NOT HAPPEN")
             
             self.packets_in_system.append((self.current_time, self.queue_length + int(self.server_busy)))
-        
+            self.packets_in_queue.append((self.current_time, self.queue_length))
+
 
     def handle_arrival(self):
 
@@ -104,6 +113,8 @@ class MM1QueueSimulator:
         else:
             self.server_busy = True
             self.schedule_event(Event(self.current_time + self.generate_time(self.service_rate), "departure"))
+        
+        self.arrival_times_queue.append(self.current_time)
 
         #schedule the next arrival - only if it can arrive until the end of the simualtion
         next_arrival = self.current_time + self.generate_time(self.arrival_rate)
@@ -111,6 +122,10 @@ class MM1QueueSimulator:
             self.schedule_event(Event(next_arrival, "arrival"))
 
     def handle_departure(self):
+
+        arrival_time = self.arrival_times_queue.pop(0)
+        time_in_system = self.current_time - arrival_time
+        self.time_in_system.append(time_in_system)
 
         if self.queue_length > 0:
             self.queue_length -= 1
@@ -130,8 +145,12 @@ class MM1QueueSimulator:
         plt.title("Number of Packets in System Over Time")
         plt.show()
     
+    def compute_average_time_in_system(self):
+        return np.mean(self.time_in_system)
+
+
     """
-    Method to compute the average empirically from the data
+    Method to compute the average empirically from the data of the packets in the system
     """
     def compute_average(self):
         
@@ -141,6 +160,29 @@ class MM1QueueSimulator:
         for i in range(len(self.packets_in_system) - 1):
             time_current, packets_current = self.packets_in_system[i]
             time_next, _ = self.packets_in_system[i + 1]
+
+            #time interval
+            delta_time = time_next - time_current
+
+            #add to weighted sum
+            weighted_sum += packets_current * delta_time
+
+            total_time += delta_time    
+        
+        average_packets = weighted_sum / total_time
+        return average_packets
+
+    """
+    Method to compute the average empirically from the data of the packets in the queue
+    """
+    def compute_average_in_queue(self):
+        
+        total_time = 0
+        weighted_sum = 0
+
+        for i in range(len(self.packets_in_queue) - 1):
+            time_current, packets_current = self.packets_in_queue[i]
+            time_next, _ = self.packets_in_queue[i + 1]
 
             #time interval
             delta_time = time_next - time_current
@@ -223,6 +265,7 @@ if __name__ == "__main__":
     #We do independent replications
     empirical_averages = []
     empirical_averages_warmup = []
+    empirical_times_in_system = []
 
     for j in range(replications):
         simulator = MM1QueueSimulator(arrival_rate, service_rate, simulation_time)
@@ -239,6 +282,9 @@ if __name__ == "__main__":
         empirical_avg_warmup = simulator.compute_average_with_warmup(warmup_time=0.5)
         empirical_averages_warmup.append(empirical_avg_warmup)
 
+        empirical_avg_time_in_sys = simulator.compute_average_time_in_system()
+        empirical_times_in_system.append(empirical_avg_time_in_sys)
+
     rho = arrival_rate / service_rate
     theoretical_avg = rho / (1 - rho)
     print(f"\nTheoretical average number of packets in system: {theoretical_avg}\n")
@@ -249,5 +295,11 @@ if __name__ == "__main__":
     
     print(f"[WITH WARMUP] Empirical average number of packets in system: {np.mean(empirical_averages_warmup)} (standard deviation {np.std(empirical_averages_warmup)})")
     lower_ci, upper_ci = confidence_interval(empirical_averages_warmup)
+    print(f"Confidence Interval: [{lower_ci}, {upper_ci}]\n")
+
+    print(f"\nTheoretical average time in system for one packet: {1/(service_rate-arrival_rate)}\n")
+
+    print(f"Empirical average time in system for one packet: {np.mean(empirical_times_in_system)} (standard deviation {np.std(empirical_times_in_system)})")
+    lower_ci, upper_ci = confidence_interval(empirical_times_in_system)
     print(f"Confidence Interval: [{lower_ci}, {upper_ci}]\n")
 
