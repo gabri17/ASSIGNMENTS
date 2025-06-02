@@ -108,13 +108,15 @@ class MM1QueueSimulator:
 
     def handle_arrival(self):
 
+        actual_queue_length = self.queue_length
+
         if self.server_busy:
             self.queue_length += 1
         else:
             self.server_busy = True
             self.schedule_event(Event(self.current_time + self.generate_time(self.service_rate), "departure"))
         
-        self.arrival_times_queue.append(self.current_time)
+        self.arrival_times_queue.append((self.current_time, actual_queue_length))
 
         #schedule the next arrival - only if it can arrive until the end of the simualtion
         next_arrival = self.current_time + self.generate_time(self.arrival_rate)
@@ -123,9 +125,9 @@ class MM1QueueSimulator:
 
     def handle_departure(self):
 
-        arrival_time = self.arrival_times_queue.pop(0)
+        arrival_time, packets_in_front = self.arrival_times_queue.pop(0)
         time_in_system = self.current_time - arrival_time
-        self.time_in_system.append(time_in_system)
+        self.time_in_system.append((time_in_system, packets_in_front))
 
         if self.queue_length > 0:
             self.queue_length -= 1
@@ -146,7 +148,10 @@ class MM1QueueSimulator:
         plt.show()
     
     def compute_average_time_in_system(self):
-        return np.mean(self.time_in_system)
+        return np.mean([el[0] for el in self.time_in_system])
+    
+    def averages_time_in_sys_and_queue_length(self):
+        return self.time_in_system
 
 
     """
