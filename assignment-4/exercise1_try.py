@@ -150,6 +150,31 @@ class MM1QueueSimulator:
     def compute_average_time_in_system(self):
         return np.mean([el[0] for el in self.time_in_system])
     
+    def times_in_system(self):
+        return [el[0] for el in self.time_in_system]
+    
+    def plot_times_in_sys(self):
+        times = self.times_in_system()
+
+        running_total = 0
+        running_average = []
+
+        for i, t in enumerate(times, 1):
+            running_total += t
+            running_average.append(running_total / i)
+
+        
+        plt.plot(running_average)
+        plt.xlabel("Packet")
+        plt.ylabel("Time")
+        plt.ylim((min(running_average), max(running_average)))
+        plt.title("Average time in the system after x packet")
+        plt.show()
+
+        #at the beginning a lot of time in the system then we stabilize to theoretical values
+
+
+    
     def averages_time_in_sys_and_queue_length(self):
         return self.time_in_system
 
@@ -275,7 +300,7 @@ if __name__ == "__main__":
     for j in range(replications):
         simulator = MM1QueueSimulator(arrival_rate, service_rate, simulation_time)
         simulator.simulate()
-        #simulator.plot_results()
+        simulator.plot_times_in_sys()
 
         #Comparisons
         rho = arrival_rate / service_rate
