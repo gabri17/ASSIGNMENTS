@@ -1,4 +1,8 @@
 - ok simulatore così?
 - warmup non funziona...
 
-EX1: solo avg packets
+EX1: solo avg packets, quindi mostro un plot va bene? oppure come faccio la media?
+Nel punto due cosa mostro? Per ora differenze in base all'utilization
+
+EX2: faccio replications, se uso control variate, la formula mi serve? E markov chain?
+Risultati subito buonissimi con drammatica riduzione della varianza

@@ -115,6 +115,7 @@ class MM1QueueSimulator:
     def handle_arrival(self):
 
         actual_queue_length = self.queue_length
+        in_server = 1 if self.server_busy else 0
 
         if self.server_busy:
             self.queue_length += 1
@@ -122,7 +123,8 @@ class MM1QueueSimulator:
             self.server_busy = True
             self.schedule_event(Event(self.current_time + self.generate_time(self.service_rate), "departure"))
         
-        self.arrival_times_queue.append((self.current_time, actual_queue_length))
+        #self.arrival_times_queue.append((self.current_time, actual_queue_length))
+        self.arrival_times_queue.append((self.current_time, actual_queue_length + in_server))
 
         #schedule the next arrival - only if it can arrive until the end of the simualtion
         next_arrival = self.current_time + self.generate_time(self.arrival_rate)
