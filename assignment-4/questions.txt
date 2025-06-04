@@ -1,0 +1,4 @@
+- ok simulatore così?
+- warmup non funziona...
+
+EX1: solo avg packets
