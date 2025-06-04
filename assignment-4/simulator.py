@@ -362,12 +362,21 @@ if __name__ == "__main__":
     empirical_averages = []
     empirical_averages_warmup = []
     empirical_times_in_system = []
+    
+    all_curves = []
+    num_points = int(simulation_time * 10)
+    time_grid = np.linspace(0, simulation_time, num_points)
 
     for j in range(replications):
         simulator = MM1QueueSimulator(arrival_rate, service_rate, simulation_time)
         simulator.simulate()
-        simulator.plot_results()
+        #simulator.plot_results()
         #simulator.plot_times_in_sys(warmup=0.8)
+        times, packets = zip(*simulator.packets_in_system)
+        packets_interp = np.interp(time_grid, times, packets)
+        #stimo i valori di pacchetti medi in ogni unita di tempo in time_grid
+        #secondo e terzo parametro sono i valori di x e y
+        all_curves.append(packets_interp)
 
 
         #Comparisons
@@ -377,6 +386,21 @@ if __name__ == "__main__":
         empirical_averages_warmup.append(empirical_avg_warmup)
         empirical_avg_time_in_sys = simulator.compute_average_time_in_system() #average time spent in the system
         empirical_times_in_system.append(empirical_avg_time_in_sys)
+
+    ################
+    all_curves = np.array(all_curves)
+    mean_curve = np.mean(all_curves, axis=0)
+    std_curve = np.std(all_curves, axis=0)
+
+    plt.figure(figsize=(10,6))
+    plt.plot(time_grid, mean_curve, label="Media sulle repliche")
+    plt.fill_between(time_grid, mean_curve-std_curve, mean_curve+std_curve, color='orange', alpha=0.3, label="±1 std")
+    plt.xlabel("Tempo")
+    plt.ylabel("Numero di pacchetti nel sistema")
+    plt.title("Media temporale del numero di pacchetti nel sistema (sulle repliche)")
+    plt.legend()
+    plt.show()
+    ################
 
     rho = arrival_rate / service_rate
     theoretical_avg = rho / (1 - rho)
