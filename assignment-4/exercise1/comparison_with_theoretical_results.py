@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from simulator import MM1QueueSimulator, confidence_interval
 import argparse
+from scipy.interpolate import interp1d
 
 
 #parameters
@@ -114,7 +115,11 @@ time_grid = np.linspace(0, max_time, num=500)
 
 interpolated_curves = []
 for times, means in zip(all_times, all_cumulative_means):
-    interp_curve = np.interp(time_grid, times, means)
+    #interp_curve = np.interp(time_grid, times, means) #primo parametro x attuale, secondo parametro x che ho, terzo parametro y che ho
+    #interpolated_curves.append(interp_curve)
+
+    f = interp1d(times, means, kind="nearest", fill_value="extrapolate")
+    interp_curve = f(time_grid)
     interpolated_curves.append(interp_curve)
 
 interpolated_curves = np.array(interpolated_curves)
@@ -123,8 +128,12 @@ warmup_std = np.nanstd(interpolated_curves)
 
 interpolated_curves_now = []
 for times, means in zip(all_times_now, all_cumulative_means_now):
-    interp_curve = np.interp(time_grid, times, means)
+    #interp_curve = np.interp(time_grid, times, means)
+    #interpolated_curves_now.append(interp_curve)
+    f = interp1d(times, means, kind="nearest", fill_value="extrapolate")
+    interp_curve = f(time_grid)
     interpolated_curves_now.append(interp_curve)
+
 
 interpolated_curves_now = np.array(interpolated_curves_now)
 mean_curve_now = np.mean(interpolated_curves_now, axis=0)
