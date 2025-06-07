@@ -6,3 +6,21 @@ Nel punto due cosa mostro? Per ora differenze in base all'utilization
 
 EX2: faccio replications, se uso control variate, la formula mi serve? E markov chain?
 Risultati subito buonissimi con drammatica riduzione della varianza
+
+
+=====================================================================================================
+=====================================================================================================
+=====================================================================================================
+
+interpolazione con hold: prendo tempo t-x e tempo t+x 
+
+https://www.mathworks.com/help/matlab/ref/double.interp1.html con method="nearest" (interpolazione con hold è method="previous")
+
+alta utilizzazione? sistema quasi instabile!!! aumento simulation_time.
+tempo inter arrivo corti e lunghi di servizio. ho sfiga.
+
+warmup iniziale: lambda distante da mu non dura molto il warmup.
+
+ex2: lambda=1, mu=2, lambda=1.9.
+
+Tolgo warmup? Teoria è rispettata. Calcolo empirico va bene. WARMUP ANCHE SUL 2!
