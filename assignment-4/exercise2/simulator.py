@@ -120,7 +120,7 @@ class MM1QueueSimulator:
 
         actual_queue_length = self.queue_length
         in_server = 1 if self.server_busy else 0
-
+                
         if self.server_busy:
             self.queue_length += 1
         else:

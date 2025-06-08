@@ -1,6 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from exercise1.simulator import MM1QueueSimulator, confidence_interval
+from simulator import MM1QueueSimulator, confidence_interval
 import argparse
 
 #parameters
@@ -49,7 +48,12 @@ for j in range(replications):
     emp_X.append(X)
     emp_Y.append(Y)
 
-    for time_in_sys, qlen, _ in simulator.time_in_system:
+    if warmup != 0.0:
+        filtered_data = [el for el in simulator.time_in_system if el[2] >= warmup]
+    else:
+        filtered_data = [el for el in simulator.time_in_system]
+
+    for time_in_sys, qlen, _ in filtered_data:
         if qlen not in strata_times:
             strata_times[qlen] = []
             strata_counts[qlen] = 0
@@ -64,7 +68,7 @@ print(f"Queue length: empirical is {np.mean(emp_Y)}, theoretical is {E_Y}\n")
 print(f"Theoretical {1/(service_rate-arrival_rate)}")
 
 X = np.array(emp_X)
-print(f"Naive: {np.mean(X)} (variance: {np.var(X)}) ({min(X)} - {max(X)})")
+print(f"Naive: {np.mean(X)} (variance: {np.var(X)})")
 
 #CONTROL VARIATES
 Y = np.array(emp_Y)
@@ -75,7 +79,7 @@ var_Y = np.var(Y, ddof=1)
 c_star = - cov_XY / var_Y
 
 X_cv = X + c_star * (Y - E_Y)
-print(f"CV: {np.mean(X_cv)} (variance: {np.var(X_cv)}) [variance reduction: {100 * (np.var(X) - np.var(X_cv))/np.var(X):.2f}%] [c* {c_star}] ")
+print(f"CV: {np.mean(X_cv)} (variance: {np.var(X_cv)})  [variance reduction: {100 * (np.var(X) - np.var(X_cv))/np.var(X):.2f}%] [c* {c_star}] ")
 
 #POST STRATIUM
 total_packets = sum(strata_counts.values())
